@@ -6,7 +6,7 @@ const PORT = 3000; //443 for hpps
 
 app.get('/', (req, res) => 
 { 
-    res.status(200).json({});
+    res.status(200).json('you reached the homepage');
 });
 
 app.use('/auth', auth);
