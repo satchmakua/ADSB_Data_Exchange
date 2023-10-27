@@ -23,6 +23,8 @@ router.post('', postUsers);
 
 // router.get('?limit=<param>&start[< "l,g" + "e, ">]=<param>',
 // getUsers);
+// once query is implemented uncomment line 24 and delete below line
+router.get('', getUsers);
 
 router.get('/:id', getID);
 
