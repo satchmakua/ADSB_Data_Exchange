@@ -91,21 +91,21 @@ getDevices = (req, res) =>
     res.status(200).json({});
 }
 
-// get '/users/:id/devices/:id
+// get '/users/:id/devices/:id'
 // get device information given a device ID and user ID
 getUserDevices = (req, res) =>
 {
     res.status(200).json({});
 }
 
-// delete '/users/:id/devices/:id
+// delete '/users/:id/devices/:id'
 // delete a device tied to a specific user
 deleteUserDevices = (req, res) =>
 {
     res.status(200).json({});
 }
 
-// put '/users/:id/devices/:id
+// put '/users/:id/devices/:id'
 // update a device tied to a specific user
 putUserDevices = (req, res) =>
 {
@@ -126,22 +126,22 @@ putDisconnect = (req, res) =>
     res.status(200).json({});
 }
 
-// get '/users/:id/devices/:id/connect
+// get '/users/:id/devices/:id/connect'
 // get connection information for a client
-// Q: what will this information be? Can client just send information in 
+// Q: what will this information be? Can client just send information in?
 getConnectUserDevices = (req, res) =>
 {
     res.status(200).json({});
 }
 
-// put '/users/:id/devices/:id/disconnect
+// put '/users/:id/devices/:id/disconnect'
 // disconnect websocket
 putDisconnectUserDevices = (req, res) =>
 {
     res.status(200).json({});
 }
 
-// get '/users/:id/devices/:id/adsb?start=<param>&end=<param>
+// get '/users/:id/devices/:id/adsb?start=<param>&end=<param>''
 // get adsb messages from a to b
 getAdsbUserDevices = (req, res) =>
 {
