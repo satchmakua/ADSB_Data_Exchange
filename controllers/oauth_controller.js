@@ -4,6 +4,8 @@ const oauthLogin = (req, res) => {
     res.status(200).json({"oauth": "login"}); // Return a JSON response indicating successful OAuth login
 }
 
+// When a function is defined without const it becomes a global variable
+
 // Function for handling OAuth logout
 const oauthLogout = (req, res) => {
     res.status(200).json({"oauth": "logged out"}); // Return a JSON response indicating successful OAuth logout

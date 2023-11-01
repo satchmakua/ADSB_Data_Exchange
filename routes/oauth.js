@@ -1,7 +1,11 @@
 const express = require('express');
-const { oauthLogin, oauthCallback, oauthLogout, oauthRefresh } = require('../controllers/oauth_controller');
-
 const router = express.Router();
+
+const {
+    postLogin,
+    postLogout,
+    postRefresh,
+} = require('../controllers/auth_controller');
 
 router.get('/login', oauthLogin);
 router.get('/callback', oauthCallback);
