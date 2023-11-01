@@ -7,10 +7,9 @@ const {
     postRefresh,
 } = require('../controllers/auth_controller');
 
-router.post('/login', postLogin);
-
-router.post('/logout', postLogout);
-
-router.post('/refresh', postRefresh);
+router.get('/login', oauthLogin);
+router.get('/callback', oauthCallback);
+router.get('/logout', oauthLogout);
+router.get('/refresh', oauthRefresh);
 
 module.exports = router;
