@@ -1,0 +1,14 @@
+{
+  "name": "ads-b-restful-data-exchange",
+  "version": "1.0.0",
+  "description": "Sagetech Capstone Project",
+  "main": "broker.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node": "^21.1.0"
+  }
+}
