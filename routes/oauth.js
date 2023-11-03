@@ -4,12 +4,13 @@ const router = express.Router();
 const {
     postLogin,
     postLogout,
+    postCallback,
     postRefresh,
-} = require('../controllers/auth_controller');
+} = require('../controllers/oauth_controller');
 
-router.get('/login', oauthLogin);
-router.get('/callback', oauthCallback);
-router.get('/logout', oauthLogout);
-router.get('/refresh', oauthRefresh);
+router.post('/login', postLogin);
+router.post('/callback', postCallback);
+router.post('/logout', postLogout);
+router.post('/refresh', postRefresh);
 
 module.exports = router;

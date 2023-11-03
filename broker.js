@@ -3,10 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser'); // Middleware for parsing HTTP request bodies
 const pgp = require('pg-promise')(); // PostgreSQL database library
 const cors = require('cors'); // Cross-Origin Resource Sharing middleware
-const auth = require('./routes/auth'); // Authentication routes
 const users = require('./routes/users'); // User-related routes
 const oauth = require('./routes/oauth'); // OAuth routes
-const adsb = require('./routes/adsb'); // ADS-B routes
 
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000; // Use the specified port or default to 3000
@@ -29,10 +27,8 @@ app.use(bodyParser.json());
 const db = pgp(DB_URI);
 
 // Define routes and route handlers
-app.use('/auth', auth);
 app.use('/users', users);
 app.use('/oauth', oauth);
-app.use('/adsb', adsb);
 
 // WebSocket server for handling connections
 wss.on('connection', (ws) => {
