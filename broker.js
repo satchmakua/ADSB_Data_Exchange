@@ -1,5 +1,6 @@
 // Import required libraries and modules
 const express = require('express')
+const http = require('http')
 const bodyParser = require('body-parser') // Middleware for parsing HTTP request bodies
 const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
@@ -12,10 +13,12 @@ const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhos
 
 // WebSocket setup for ADS-B
 const WebSocket = require('ws')
-const wss = new WebSocket.Server({ noServer: true })
 
 // Create an Express application
 const app = express()
+
+const server = http.createServer(app)
+const wss = new WebSocket.Server({ server })
 
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
@@ -30,13 +33,21 @@ const db = pgp(DB_URI)
 app.use('/users', users)
 app.use('/oauth', oauth)
 
-// WebSocket server for handling connections
-wss.on('connection', (ws) =>
+app.get('/groundstation/websocket', (req, res) =>
 {
-    console.log('Client connected to ADS-B WebSocket')
+    const ws = new WebSocket('ws://localhost:3000')
+})
 
-    // For demonstration purposes, send a welcome message to connected clients
-    ws.send(JSON.stringify({ message: 'Welcome to ADS-B WebSocket' }))
+wss.on('connection', function connection(ws)
+{
+    ws.on('message', function incoming(message)
+    {
+        let data = JSON.parse(message)
+
+        // TO DO: feed incoming messages into database
+        //console.log(data.messageData)
+        //console.log(data.timeStamp)
+    })
 })
 
 // Handle WebSocket upgrade requests
@@ -104,7 +115,7 @@ app.use((req, res, next) =>
 })
 
 // Start the server and listen on the specified port
-app.listen(PORT, () =>
+server.listen(PORT, () =>
 {
     console.log(`Broker service running on port ${PORT}`)
 })
