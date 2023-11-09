@@ -14,18 +14,56 @@ const pool = new Pool({
 // create user
 postUsers = (req, res) =>
 {
-    const { username, password, device } = req.body
-    const shaPass = crypto.createHash("sha256").update(password).digest("hex")
-    pool.query(`INSERT INTO users (username, password) VALUES ('${username}', '${shaPass}') RETURNING *`, (error, results) =>
+    const { username, password } = req.body
+
+    const salt = crypto.randomBytes(32).toString('hex')
+    if (password == null || password.length < 1 || username == null || username.length < 1 ) {
+        res.status(400).send('username or password not provided.')
+        return
+    }
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+ 
+    pool.query(`INSERT INTO users (username, password, salt) VALUES ('${username}', '${hash}', '${salt}') RETURNING *`, (error, results) =>
     {
         if (error)
         {
-            throw error
+            res.status(500).send('User registration failed.')
+            return
         }
         res.status(201).send(`User added with ID: ${results.rows[0].id}`)
     })
-
 }
+
+// post '/users/validate'
+// validate that user login information is correct when user first logs into the application
+isValidUser = (req, res) => {
+    const {username, password} = req.body;
+    let salt = ''
+
+    if (password == null || password.length < 1 || username == null || username.length < 1 ) {
+        res.status(400).send('username or password not provided.')
+        return
+    }
+
+    pool.query(`SELECT salt from users WHERE username='${username}'`, (error, results) => {
+        if (error) {
+            res.status(500).send('User not found in the system.')
+            return
+        }
+        salt = results.rows[0].salt
+    })
+
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+    
+    pool.query(`SELECT id FROM users WHERE username='${username}' AND password='${hash}'`, (error, results) => {
+        if (error) {
+            res.status(400).send('Invalid Password.')
+            return
+        }
+        res.status(201).send('User Verified.')
+    })
+}
+
 
 // get '/users?limit=<param>&start[< "l,g" + "e, ">]=<param>'
 // list users with query
@@ -37,7 +75,8 @@ getUsers = (req, res) =>
     {
         if (error)
         {
-            throw error
+            res.status(500).send('Unable to retrieve user list.')
+            return
         }
         res.status(200).json(results.rows)
     })
@@ -134,21 +173,6 @@ putDisconnect = (req, res) =>
     res.status(200).json({})
 }
 
-// get '/users/:id/devices/:id/connect'
-// get connection information for a client
-// Q: what will this information be? Can client just send information in?
-getConnectUserDevices = (req, res) =>
-{
-    res.status(200).json({})
-}
-
-// put '/users/:id/devices/:id/disconnect'
-// disconnect websocket
-putDisconnectUserDevices = (req, res) =>
-{
-    res.status(200).json({})
-}
-
 // get '/users/:id/devices/:id/adsb?start=<param>&end=<param>''
 // get adsb messages from a to b
 getAdsbUserDevices = (req, res) =>
@@ -158,18 +182,17 @@ getAdsbUserDevices = (req, res) =>
 
 module.exports = {
     postUsers,
+    isValidUser,
     getUsers,
     getID,
     deleteID,
     putID,
-    getConnect,
-    putDisconnect,
     postDevices,
     getDevices,
     getUserDevices,
     deleteUserDevices,
     putUserDevices,
-    getConnectUserDevices,
-    putDisconnectUserDevices,
+    getConnect,
+    putDisconnect,
     getAdsbUserDevices,
 }
