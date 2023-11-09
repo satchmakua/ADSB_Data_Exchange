@@ -1,29 +1,37 @@
-DROP TABLE IF EXISTS auth;
-DROP TABLE IF EXISTS devices;
+DROP TABLE IF EXISTS clientdevices;
+DROP TABLE IF EXISTS groundstations;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users
 (
 	id serial PRIMARY KEY,
-	UNIQUE username text,
-	password text
+ 	username text UNIQUE,
+	password text,
+	salt text
 ) WITH (OIDS = FALSE);
 
-CREATE TABLE devices
+/*
+the relation between users and groundstations is one to many,
+i.e. a user can have many groundstations but each groundstation should only
+be tied to one user. So each ground station will only exist once in this table. 
+If this changes, we need to do a join table.
+*/
+CREATE TABLE groundstations
 (
 	user_id serial,
-	device text,
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    PRIMARY KEY(user_id, device)
+	mac_address text UNIQUE,
+	location point,
+   FOREIGN KEY(user_id) REFERENCES users(id),
+   PRIMARY KEY(mac_address)
 ) WITH (OIDS = FALSE);
 
-CREATE TABLE auth
+/*
+we are treating the relation between users and clientdevices as one to many right now, however that may change.
+*/
+CREATE TABLE clientdevices
 (
 	user_id serial,
-	access_token text,
-	refresh_token text,
-	FOREIGN KEY(user_id) REFERENCES users(id)
-) WITH (OIDS = FALSE);
-
-SELECT * from users;
-SELECT * from auth;
+	mac_address text UNIQUE,
+	FOREIGN KEY(user_id) REFERENCES users(id),
+   PRIMARY KEY(mac_address)
+)
