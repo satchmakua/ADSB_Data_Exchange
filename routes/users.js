@@ -3,6 +3,7 @@ const router = express.Router()
 
 const {
     postUsers,
+    isValidUser,
     getUsers,
     getID,
     deleteID,
@@ -20,6 +21,8 @@ const {
 } = require('../controllers/users_controller')
 
 router.post('', postUsers)
+
+router.post('/validate', isValidUser)
 
 // router.get('?limit=<param>&start[< "l,g" + "e, ">]=<param>',
 // getUsers)
