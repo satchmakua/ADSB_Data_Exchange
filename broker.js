@@ -38,6 +38,10 @@ app.get('/groundstation/websocket', (req, res) =>
     const ws = new WebSocket('ws://localhost:3000')
 })
 
+app.get('/client/websocket', (req, res) => {
+    const clientws = new WebSocket('ws://localhost:3001')
+})
+
 wss.on('connection', function connection(ws)
 {
     ws.on('message', function incoming(message)
@@ -47,6 +51,8 @@ wss.on('connection', function connection(ws)
         // TO DO: feed incoming messages into database
         //console.log(data.messageData)
         //console.log(data.timeStamp)
+        clientws.send(data.messageData)
+        clientws.send(data.timestamp)
     })
 })
 
