@@ -19,6 +19,7 @@ const app = express()
 
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
+//const clients = new Map();
 
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
@@ -33,26 +34,31 @@ const db = pgp(DB_URI)
 app.use('/users', users)
 app.use('/oauth', oauth)
 
-app.get('/groundstation/websocket', (req, res) =>
-{
-    const ws = new WebSocket('ws://localhost:3000')
-})
-
-app.get('/client/websocket', (req, res) => {
-    const clientws = new WebSocket('ws://localhost:3001')
-})
+// app.get('/groundstation/websocket', (req, res) =>
+// {
+//     console.log('broker setting up ground station websocket')
+//     const ws = new WebSocket('ws://localhost:3000')
+//     console.log('ws ', ws)
+// })
 
 wss.on('connection', function connection(ws)
 {
+    ws.on('error', console.error)
     ws.on('message', function incoming(message)
     {
         let data = JSON.parse(message)
 
         // TO DO: feed incoming messages into database
-        //console.log(data.messageData)
-        //console.log(data.timeStamp)
-        clientws.send(data.messageData)
-        clientws.send(data.timestamp)
+        console.log(data.messageData)
+        console.log(data.timeStamp)
+        // sends any message that the broker receives over websocket connection
+        // to all other websocket connections that the broker is maintaining
+        wss.clients.forEach(function each(client) {
+            if (data.messageData && client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(data.messageData)
+                client.send(data.timeStamp)
+            }
+        })
     })
 })
 
