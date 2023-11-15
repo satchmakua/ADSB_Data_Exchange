@@ -7,7 +7,7 @@ const ws = new WebSocket(wsUrl);
 ws.on('open', function open() {
     console.log('Connected to the server');
     // Optionally send a message to the server
-    // ws.send('Hello Server');
+    ws.send('Hello Server');
 });
 
 ws.on('message', function incoming(data) {

@@ -49,9 +49,10 @@ router.delete('/:id/devices/:id', deleteUserDevices)
 
 router.put('/:id/devices/:id', putUserDevices)
 
-router.get('/:id/devices/:id/connect', getConnectUserDevices)
+/*router.get('/:id/devices/:id/connect', getConnectUserDevices)
 
 router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices)
+*/
 
 router.get('/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
 
