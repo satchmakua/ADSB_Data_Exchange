@@ -18,11 +18,14 @@ const {
     getConnectUserDevices,
     putDisconnectUserDevices,
     getAdsbUserDevices,
+    putUserAdsbStream,
 } = require('../controllers/users_controller')
 
 router.post('', postUsers)
 
 router.post('/validate', isValidUser)
+
+/* users */
 
 // router.get('?limit=<param>&start[< "l,g" + "e, ">]=<param>',
 // getUsers)
@@ -39,6 +42,8 @@ router.get('/:id/client/connect', getConnect)
 
 router.put('/:id/client/disconnect', putDisconnect)
 
+/* devices */
+
 router.post('/:id/devices', postDevices)
 
 router.get('/:id/devices?limit=<param>&start[< "l,g" + "e, ">]=<param>', getDevices)
@@ -49,10 +54,12 @@ router.delete('/:id/devices/:id', deleteUserDevices)
 
 router.put('/:id/devices/:id', putUserDevices)
 
-router.get('/:id/devices/:id/connect', getConnectUserDevices)
+// router.get('/:id/devices/:id/connect', getConnectUserDevices) /* REMOVE? */
 
-router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices)
+// router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices) /* REMOVE? */
 
-router.get('/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
+router.get('/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices) 
+
+router.put('/:id/devices/:id/adsb/stream ', putUserAdsbStream)
 
 module.exports = router

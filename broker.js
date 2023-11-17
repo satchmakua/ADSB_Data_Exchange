@@ -6,6 +6,7 @@ const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 const users = require('./routes/users') // User-related routes
 const oauth = require('./routes/oauth') // OAuth routes
+//const groundstations = require('./routes/groundstations') // groundstations routes
 
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000 // Use the specified port or default to 3000
@@ -32,6 +33,7 @@ const db = pgp(DB_URI)
 // Define routes and route handlers
 app.use('/users', users)
 app.use('/oauth', oauth)
+//app.use('/groundstations', groundstations)
 
 app.get('/groundstation/websocket', (req, res) =>
 {

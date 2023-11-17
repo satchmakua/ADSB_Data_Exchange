@@ -180,6 +180,13 @@ getAdsbUserDevices = (req, res) =>
     res.status(200).json({})
 }
 
+/* put /users/:id/devices/:id/adsb/stream */
+/* stream data from socket directly to user */
+putUserAdsbStream = (req, res) =>
+{
+    res.status(200).json({})
+}
+
 module.exports = {
     postUsers,
     isValidUser,
@@ -195,4 +202,5 @@ module.exports = {
     getConnect,
     putDisconnect,
     getAdsbUserDevices,
+    putUserAdsbStream,
 }
