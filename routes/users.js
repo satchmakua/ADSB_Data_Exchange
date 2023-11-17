@@ -39,6 +39,8 @@ router.get('/:id/client/connect', getConnect)
 
 router.put('/:id/client/disconnect', putDisconnect)
 
+/* devices */
+
 router.post('/:id/devices', postDevices)
 
 router.get('/:id/devices?limit=<param>&start[< "l,g" + "e, ">]=<param>', getDevices)
