@@ -1,85 +1,105 @@
-const jwt = require("jsonwebtoken")
-const bcrypt = require("bcryptjs")
-const path = require('path')
-// require("dotenv").config({
-//     override: true,
-//     //path: path.join(__dirname, '../dev.env')
-//     path: path.join(__dirname, 'dev.env')
-//  })
 
-// try 
-// {
-//         console.log('inside try')
-//         await client.query('BEGIN')
-//         //const q = "select * from users"
-//         const q = "UPDATE users SET token = '456a' where username = 'satchet'"
-//         const output = await client.query(q)
-//         await client.query('COMMIT')
-//         console.log(output)
-//         console.log(await client.query("select * from users"))
-// } 
+const R = require('ramda')
 
-// catch (e)
-// {
-//     console.log(e)
-//     client.release()
-// }
+/* verify auth tokens */
+/* middlewares*/
+const  {
+    genAuthTokens,
+    genOAuthCode,
+    genAccessToken,
+    findUserByToken,
+    removeToken,
+} = require('../methods/oauth_methods')
 
-// Function for handling OAuth login
-const postLogin = (req, res) =>
+
+
+
+/* Function for registering */
+postRegister = (req, res) =>
 {
-    console.log("OAuth login route hit") 
-    res.status(200).json({ "oauth": "login" }) 
+    const body = R.pick( ['name', 'email', 'password'], req.body )
+    try
+    {
+        /* need to create a new user */
+        const token = genAuthTokens( body.name, client )
+        res.header( 'x-auth', token ).send( body.name )
+
+    }
+    catch ( e )
+    {
+        res.status(400).send(
+            {
+                code: 400,
+                message: e,
+            }
+        )
+    }
 }
 
-// Function for handling OAuth logout
-const postLogout = (req, res) =>
+
+/* Function for handling OAuth login */
+postLogin = async (req, res) =>
 {
-    res.status(200).json({ "oauth": "logged out" }) 
+    const body = R.pick( ['email', 'password'], req.body )
+    try 
+    {
+        const user  = await findUserByCredentials( client, body.email, body.password )
+        const token = await genAuthTokens( user, client )
+        res.header( 'x-auth', token ).send( R.pick( ['name'], user ) )
+    }
+    catch ( e )
+    {
+        res.status(400).json(
+            { 
+                code: 400, 
+                message: e,
+            }) 
+    }
+    //console.log("OAuth login route hit") 
+    //res.status(200).json({ "oauth": "login" }) 
 }
 
-// Function for refreshing OAuth tokens
-const postRefresh = (req, res) =>
+
+/* Function for handling OAuth logout */
+postLogout = async (req, res) =>
+{
+    req.user.removeToken( req.token ).then(
+        res.status(200).json(
+            { 
+                'code': 200,
+                'message': 'logout successful',
+            }).catch( ( e ) =>
+            {
+                res.status(400).json(
+                    { 
+                        code: 400, 
+                        message: e,
+                    }) 
+            })
+    ) 
+}
+
+
+/* Function for refreshing OAuth tokens */
+postRefresh = (req, res) =>
 {
     res.status(200).json({ "oauth": "token refreshed" })
 }
 
-// Function for handling OAuth callback
-const postCallback = (req, res) =>
+
+/* Function for handling OAuth callback */
+postCallback = (req, res) =>
 {
     res.status(200).json({ "oauth": "callback" }) 
 }
 
-const generateAuthTokens = async (user, client, db) =>
-{
-   // console.log(client)
-    // need to search in db for user and get hex value of id
-    await client.query('BEGIN')
-//         const q = "UPDATE users SET token = '456a' where username = 'satchet'"
-//         const output = await client.query(q)
-//         await client.query('COMMIT')
-
-    const id = await client.query(`SELECT id from ${db} where username = '${user}';`) //"\x01"
-    console.log(id);
-    // const access = 'auth'
-    // const token = jwt.sign(
-    // {
-    //     _id: id, 
-    //     access
-    // }, 
-    // process.env.JWT_SECRET).toString()
-
-
-
-}
 
 
 
 
 module.exports = {
-    // postLogin,
-    // postRefresh,
-    // postLogout,
-    // postCallback,
-    generateAuthTokens
+    postLogin,
+    postRefresh,
+    postLogout,
+    postCallback,
 }

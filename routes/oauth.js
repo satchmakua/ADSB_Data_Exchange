@@ -10,6 +10,7 @@ const {
 
 router.post('/login', postLogin)
 router.post('/callback', postCallback)
+/* maybe delete for logout */
 router.post('/logout', postLogout)
 router.post('/refresh', postRefresh)
 
