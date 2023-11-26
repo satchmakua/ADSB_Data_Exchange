@@ -2,29 +2,8 @@
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 const path = require('path')
-// require("dotenv").config({
-//     override: true,
-//     //path: path.join(__dirname, '../dev.env')
-//     path: path.join(__dirname, 'dev.env')
-//  })
 
-// try 
-// {
-//         console.log('inside try')
-//         await client.query('BEGIN')
-//         //const q = "select * from users"
-//         const q = "UPDATE users SET token = '456a' where username = 'satchet'"
-//         const output = await client.query(q)
-//         await client.query('COMMIT')
-//         console.log(output)
-//         console.log(await client.query("select * from users"))
-// } 
 
-// catch (e)
-// {
-//     console.log(e)
-//     client.release()
-// }
 
 
 async function genAuthTokens (user, client)
@@ -32,7 +11,7 @@ async function genAuthTokens (user, client)
     // need to search in db for user and get hex value of id
     await client.query('BEGIN')
 
-    const id = ( await client.query(`SELECT id FROM users WHERE username = '${user}';`) )[0]['id'].toString(16)
+    const id = ( await client.query(`SELECT id FROM users WHERE username = '${user.username}';`) )[0]['id'].toString(16)
     const access = 'auth'
     const token = jwt.sign(
     {
@@ -40,8 +19,8 @@ async function genAuthTokens (user, client)
         access
     }, 
     process.env.JWT_SECRET).toString()
-
-    await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user}';`)
+    
+    await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user.username}';`)
     await client.query('COMMIT')
     return token
 
@@ -127,26 +106,40 @@ async function findUserByCredentials (client, email, password)
     {
         bcrypt.compare( password, user.password, function ( err, res ) 
         {
-            if (res)
-            {
-                resolve(user)
-            }
-            else
-            {
-                reject()
-            }
+         
+         resolve(user) /* password not hashed yet */
+            // if (res)
+            // {
+            //     resolve(user)
+            // }
+            // else
+            // {
+            //     reject()
+            // }
         })
     })
 
 
 }
 
+
 async function removeToken(user, client)
 {
     /* set up a notification if failed */
-    await client.query(`UPDATE users SET token='-1' WHERE username='${user}';`)
+    await client.query(`UPDATE users SET token='', access='' WHERE username='${user}';`)
     return await client.query('COMMIT') /* might have to modify route so it is always successful */
 }
+
+
+async function createUser(username, email, password, client)
+{
+   //await client.query('BEGIN')
+
+   await client.query(`INSERT INTO users (username, email, password) VALUES ('${username}', '${email}', '${password}')`)
+   await client.query('COMMIT')
+}
+
+
 
 
 module.exports = {
@@ -156,4 +149,5 @@ module.exports = {
     findUserByToken,
     findUserByCredentials,
     removeToken,
+    createUser,
 }

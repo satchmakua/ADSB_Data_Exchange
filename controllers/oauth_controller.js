@@ -8,20 +8,25 @@ const  {
     genOAuthCode,
     genAccessToken,
     findUserByToken,
+    findUserByCredentials,
     removeToken,
+    createUser,
 } = require('../methods/oauth_methods')
+
+const client  = require('../database/db.js')
 
 
 
 
 /* Function for registering */
-postRegister = (req, res) =>
+postRegister = async (req, res) =>
 {
-    const body = R.pick( ['name', 'email', 'password'], req.body )
-    try
+   const body = R.pick( ['username', 'email', 'password'], req.body )
+   await createUser(body.username, body.email, body.password, client) 
+   try
     {
         /* need to create a new user */
-        const token = genAuthTokens( body.name, client )
+        const token = await genAuthTokens( body.name, client )
         res.header( 'x-auth', token ).send( body.name )
 
     }
@@ -40,35 +45,37 @@ postRegister = (req, res) =>
 /* Function for handling OAuth login */
 postLogin = async (req, res) =>
 {
-    const body = R.pick( ['email', 'password'], req.body )
+    const body = R.pick( ['email', 'password'], req.body ) /* or username? */
     try 
     {
         const user  = await findUserByCredentials( client, body.email, body.password )
         const token = await genAuthTokens( user, client )
-        res.header( 'x-auth', token ).send( R.pick( ['name'], user ) )
+        res.header( 'x-auth', token ).send( R.pick( ['username'], user ) )
     }
     catch ( e )
     {
+      console.log(e)
         res.status(400).json(
             { 
                 code: 400, 
                 message: e,
             }) 
     }
-    //console.log("OAuth login route hit") 
-    //res.status(200).json({ "oauth": "login" }) 
+    
 }
 
 
 /* Function for handling OAuth logout */
 postLogout = async (req, res) =>
 {
-    req.user.removeToken( req.token ).then(
+    const body = R.pick(['username'], req.body)
+    removeToken( body.username, client/*req.token*/ ).then(
         res.status(200).json(
             { 
                 'code': 200,
                 'message': 'logout successful',
-            }).catch( ( e ) =>
+            })
+            ).catch( ( e ) =>
             {
                 res.status(400).json(
                     { 
@@ -76,7 +83,6 @@ postLogout = async (req, res) =>
                         message: e,
                     }) 
             })
-    ) 
 }
 
 
@@ -98,6 +104,7 @@ postCallback = (req, res) =>
 
 
 module.exports = {
+   postRegister,
     postLogin,
     postRefresh,
     postLogout,
