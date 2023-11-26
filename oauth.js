@@ -1,3 +1,4 @@
+
 /* Import required libraries and modules */
 // const express = require('express')
 // const bodyParser = require('body-parser') 
@@ -29,12 +30,11 @@ async function connection() {
 
 //const client = db.connect()
 //setTimeout(() => {  console.log('World!'); }, 2000);
-console.log('ddads')
 
-const { generateAuthTokens } = require('./controllers/oauth_controller');
+
+const { genAuthTokens } = require('./methods/oauth_methods');
 const { none } = require('ramda');
-console.log('ddads')
-connection().then(obj => {generateAuthTokens('alex', obj, 'users')})
+connection().then((obj) => { genAuthTokens('alex', obj)})
 
 // const PORT = process.env.PORT || 3000 
 
