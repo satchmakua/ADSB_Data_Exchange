@@ -1,23 +1,18 @@
-const WebSocket = require('ws');
 
-// Replace with your WebSocket server URL
-const wsUrl = 'ws://localhost:3000/groundstation/websocket';
-const ws = new WebSocket(wsUrl);
+const pgp = require('pg-promise')();
 
-ws.on('open', function open() {
-    console.log('Connected to the server');
-    // Optionally send a message to the server
-    ws.send('Hello Server');
-});
+// Database connection details would be configured here
+const db = pgp('postgresql://postgres:sagetech123@localhost:5432/database');
 
-ws.on('message', function incoming(data) {
-    console.log('Received data: ', data);
-});
+// Function to retrieve and display the latest ADS-B messages from the database
+async function fetchLatestAdsbMessages() {
+    try {
+        const messages = await db.any('SELECT * FROM adsb_messages ORDER BY timestamp DESC LIMIT 10', []);
+        console.log('Latest ADS-B Messages:', messages);
+    } catch (error) {
+        console.error('Error fetching ADS-B messages:', error);
+    }
+}
 
-ws.on('error', function error(error) {
-    console.error('WebSocket error:', error);
-});
-
-ws.on('close', function close() {
-    console.log('Disconnected from the server');
-});
+// Call the function to fetch and display messages
+fetchLatestAdsbMessages();
