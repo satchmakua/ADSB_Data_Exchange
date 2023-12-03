@@ -97,7 +97,7 @@ app.get('/message', async (req, res) =>
         res.status(500).send("Error fetching messages: " + err)
     }
 })
-
+// TO-DO: Don't think this is needed/if it is then should be moved
 // Placeholder routes for subscribing and unsubscribing (TODO: Implement logic)
 app.post('/subscribe', async (req, res) =>
 {
@@ -105,7 +105,7 @@ app.post('/subscribe', async (req, res) =>
     // TODO: Logic to add the topic to the subscriber's list of subscriptions
     res.status(200).send("Subscribed successfully!")
 })
-
+// TO-DO: Don't think this is needed/if it is then should be moved
 app.post('/unsubscribe', async (req, res) =>
 {
     const { subscriberId, topic } = req.body

@@ -1,5 +1,4 @@
 const Pool = require('pg').Pool
-const crypto = require('crypto')
 
 // TO-DO: set db up on WSU server and update these settings
 const pool = new Pool({
