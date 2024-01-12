@@ -30,7 +30,7 @@ async function genAuthTokens (user, client)
 /* generate auth code */
 async function genOAuthCode (user, client /* will need to add param for project */)
 {
-    const id = ( await client.query(`SELECT id FROM users WHERE username = '${user}';`) )[0]['id'].toString(16)
+    const id = user.id //( await client.query(`SELECT id FROM users WHERE username = '${user}';`) )[0]['id'].toString(16)
     const access = 'oauth'
     const token = jwt.sign(
         {
@@ -49,7 +49,7 @@ async function genOAuthCode (user, client /* will need to add param for project 
 /* exchange access token for oauth code */
 async function genAccessToken (user, client /* will need to add param for project */)
 {
-    const id = ( await client.query(`SELECT id FROM users WHERE username = '${user}';`) )[0]['id'].toString(16)
+    const id = user.id//( await client.query(`SELECT id FROM users WHERE username = '${user}';`) )[0]['id'].toString(16)
     const access = 'access_token'
     const token = jwt.sign(
         {
