@@ -22,13 +22,11 @@ const client  = require('../database/db.js')
 postRegister = async (req, res) =>
 {
    const body = R.pick( ['username', 'email', 'password'], req.body )
-   await createUser(body.username, body.email, body.password, client) 
    try
     {
-        /* need to create a new user */
-        const token = await genAuthTokens( body.name, client )
-        res.header( 'x-auth', token ).send( body.name )
-
+      const user = await createUser(body.username, body.email, body.password, client)
+      const token = await genAuthTokens( user, client )
+      await res.header( 'x-auth', token ).send( body.name )
     }
     catch ( e )
     {
@@ -65,9 +63,9 @@ postLogin = async (req, res) =>
 }
 
 
-/* Function for handling OAuth logout */
+/* Function for handling OAuth logout */ 
 postLogout = async (req, res) =>
-{
+{ /* DELETE since getting deleting token and access */
     const body = R.pick(['username'], req.body)
     removeToken( body.username, client/*req.token*/ ).then(
         res.status(200).json(

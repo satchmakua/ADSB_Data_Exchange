@@ -11,7 +11,8 @@ async function genAuthTokens (user, client)
     // need to search in db for user and get hex value of id
     await client.query('BEGIN')
 
-    const id = ( await client.query(`SELECT id FROM users WHERE username = '${user.username}';`) )[0]['id'].toString(16)
+    const id = user.id; //( await client.query(`SELECT id FROM users WHERE username = '${user.username}';`) )[0]['id'].toString(16)
+    
     const access = 'auth'
     const token = jwt.sign(
     {
@@ -136,7 +137,9 @@ async function createUser(username, email, password, client)
    //await client.query('BEGIN')
 
    await client.query(`INSERT INTO users (username, email, password) VALUES ('${username}', '${email}', '${password}')`)
+   const user = await client.query(`SELECT * FROM users WHERE username='${username}';`)
    await client.query('COMMIT')
+   return user
 }
 
 
