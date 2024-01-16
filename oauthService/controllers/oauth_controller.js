@@ -11,9 +11,9 @@ const  {
     findUserByCredentials,
     removeToken,
     createUser,
-} = require('../methods/oauth_methods')
+} = require('../../methods/oauth_methods')
 
-const client  = require('../database/db.js')
+const client  = require('../../database/db.js')
 
 
 
