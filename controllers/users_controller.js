@@ -10,6 +10,20 @@ const pool = new Pool({
     port: 5432
 })
 
+standardReturn = (res, error, results, errCode, customErrStr) => {
+    if (error)
+    {
+        const code = errCode ?? 500
+        if (customErrStr) {
+            res.status(code).send(customErrStr)
+        } else {
+            res.status(code).send(`Error: ${error}`)
+        }
+        return
+    }
+    res.status(200).send(results.rows)
+}
+
 // post '/users'
 // create user
 postUsers = (req, res) =>
@@ -89,15 +103,7 @@ getUsers = (req, res) =>
 getID = (req, res) =>
 {
     const id = parseInt(req.params.id)
-    pool.query(`SELECT * FROM users WHERE id = ${id}`, (error, results) =>
-    {
-        if (error)
-        {
-            throw error
-        }
-        res.status(200).json(results.rows)
-    })
-
+    pool.query(`SELECT * FROM users WHERE id = ${id}`, (error, results) => standardReturn(res, error, results))
 }
 
 // delete '/users/:id'
@@ -105,14 +111,7 @@ getID = (req, res) =>
 deleteID = (req, res) =>
 {
     const id = parseInt(req.params.id)
-    pool.query(`DELETE FROM users WHERE id = ${id}`, (error, results) =>
-    {
-        if (error)
-        {
-            throw error
-        }
-        res.status(200).json(results.rows)
-    })
+    pool.query(`DELETE FROM users WHERE id = ${id}`, (error, results) => standardReturn(res, error, results))
 }
 
 // put '/users/:id'
@@ -120,14 +119,46 @@ deleteID = (req, res) =>
 // Q: just updating password? Option to update username or both?
 putID = (req, res) =>
 {
-    res.status(200).json({})
+    // TO-DO
+    // const id = parseInt(req.params.id)
+
+    // const { username, password } = req.body
+
+    // if (username && password) {
+
+    // } else if (username) {
+
+    // } else if (password) {
+
+    // } else {
+
+    // }
+    // const salt = crypto.randomBytes(32).toString('hex')
+    // if (password == null || password.length < 1 || username == null || username.length < 1 ) {
+    //     res.status(400).send('username or password not provided.')
+    //     return
+    // }
+    // const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+ 
+    
 }
 
 // post '/users/:id/devices'
 // input a new device tied to user id
 postDevices = (req, res) =>
 {
-    res.status(200).json({})
+    const id = parseInt(req.params.id)
+    const {mac_address, latitude, longitude} = req.body;
+    // should get mac_address / identifier from somewhere else???
+    pool.query(`INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES (${id}, '${mac_address}', ${latitude}, ${longitude}) RETURNING *`, (error, results) =>
+    {
+        if (error)
+        {
+            res.status(500).send(`Error: ${error}`)
+            return
+        }
+        res.status(201).send(`Device ${mac_address} added with id ${results.rows[0].id} and associated with user ${id}`)
+    })
 }
 
 // get '/users/:id/devices?limit=<param>&start[< "l,g" + "e, ">]=<param>'
@@ -135,28 +166,58 @@ postDevices = (req, res) =>
 // Q: so this query will only be for a specific user?
 getDevices = (req, res) =>
 {
-    res.status(200).json({})
+    const id = parseInt(req.params.id)
+    pool.query(`SELECT * FROM groundstations WHERE user_id = ${id}`, (error, results) => {
+        if (error)
+        {
+            res.status(500).send(`Error: ${error}`)
+            return
+        }
+        res.status(200).send(results.rows)
+    })
 }
 
-// get '/users/:id/devices/:id'
+// get '/users/:id/devices/:deviceid'
 // get device information given a device ID and user ID
 getUserDevices = (req, res) =>
 {
-    res.status(200).json({})
+    const id = parseInt(req.params.id)
+    const deviceid = parseInt(req.params.deviceid)
+    pool.query(`SELECT * FROM groundstations WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => {
+        if (error)
+        {
+            res.status(500).send(`Error: ${error}`)
+            return
+        }
+        res.status(200).send(results.rows)
+    })
 }
 
-// delete '/users/:id/devices/:id'
+// delete '/users/:id/devices/:deviceid'
 // delete a device tied to a specific user
 deleteUserDevices = (req, res) =>
 {
-    res.status(200).json({})
+    const id = parseInt(req.params.id)
+    const deviceid = parseInt(req.params.deviceid)
+    pool.query(`DELETE FROM groundstations WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
 }
 
-// put '/users/:id/devices/:id'
+// put '/users/:id/devices/:deviceid'
 // update a device tied to a specific user
 putUserDevices = (req, res) =>
 {
-    res.status(200).json({})
+    const id = parseInt(req.params.id)
+    const deviceid = parseInt(req.params.deviceid)
+    const {latitude, longitude} = req.body
+    if (latitude && longitude) {
+        pool.query(`UPDATE groundstations SET latitude = ${latitude}, longitude = ${longitude} WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+    } else if (latitude) {
+        pool.query(`UPDATE groundstations SET latitude = ${latitude} WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+    } else if (longitude) {
+        pool.query(`UPDATE groundstations SET longitude = ${longitude} WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+    } else {
+        res.status(402).send('Include latitude or longitude in body to update')
+    }
 }
 
 // get 'users/:id/client/connect'
@@ -177,6 +238,10 @@ putDisconnect = (req, res) =>
 // get adsb messages from a to b
 getAdsbUserDevices = (req, res) =>
 {
+    // verify that device is assigned to user
+    // any o-auth related stuff here?
+    // prompt broker to set-up message queue from time a to b for this device
+    // redirect to give client information for websocket connection
     res.status(200).json({})
 }
 

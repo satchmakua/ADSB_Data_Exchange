@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS clientdevices;
 DROP TABLE IF EXISTS groundstations;
 DROP TABLE IF EXISTS users;
 
@@ -18,20 +17,11 @@ If this changes, we need to do a join table.
 */
 CREATE TABLE groundstations
 (
-	user_id serial,
+	id serial PRIMARY KEY,
+	user_id int,
 	mac_address text UNIQUE,
-	location point,
-   FOREIGN KEY(user_id) REFERENCES users(id),
-   PRIMARY KEY(mac_address)
+	latitude int,
+	longitude int,
+   FOREIGN KEY(user_id) REFERENCES users(id)
 ) WITH (OIDS = FALSE);
-
-/*
-we are treating the relation between users and clientdevices as one to many right now, however that may change.
-*/
-CREATE TABLE clientdevices
-(
-	user_id serial,
-	mac_address text UNIQUE,
-	FOREIGN KEY(user_id) REFERENCES users(id),
-   PRIMARY KEY(mac_address)
 )
