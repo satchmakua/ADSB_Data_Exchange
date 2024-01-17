@@ -17,8 +17,8 @@ const WebSocket = require('ws')
 // Create an Express application
 const app = express()
 
-const server = http.createServer(app)
-const wss = new WebSocket.Server({ server })
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
@@ -38,17 +38,17 @@ app.get('/groundstation/websocket', (req, res) =>
     const ws = new WebSocket('ws://localhost:3000')
 })
 
-wss.on('connection', function connection(ws)
-{
-    ws.on('message', function incoming(message)
-    {
-        let data = JSON.parse(message)
+// WebSocket connection handling
+wss.on('connection', function connection(ws) {
+    ws.on('message', function incoming(message) {
+        let data = JSON.parse(message);
 
-        // TO DO: feed incoming messages into database
-        //console.log(data.messageData)
-        //console.log(data.timeStamp)
-    })
-})
+        // Store the message in the adsb_messages table
+        db.none('INSERT INTO adsb_messages (message_data, timestamp) VALUES ($1, NOW())', [data])
+            .then(() => console.log('Message stored in database'))
+            .catch(error => console.error('Error storing message:', error));
+    });
+});
 
 // Handle WebSocket upgrade requests
 app.on('upgrade', (request, socket, head) =>
@@ -115,10 +115,9 @@ app.use((req, res, next) =>
 })
 
 // Start the server and listen on the specified port
-server.listen(PORT, () =>
-{
-    console.log(`Broker service running on port ${PORT}`)
-})
+server.listen(PORT, () => {
+    console.log(`Broker service running on port ${PORT}`);
+});
 
 // Gracefully shut down on SIGINT (Ctrl-C)
 process.on('SIGINT', function ()

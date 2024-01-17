@@ -1,13 +1,17 @@
-const axios = require('axios');
-const brokerUri = 'http://localhost:3000';  // URI of the broker server
+const pgp = require('pg-promise')();
 
-async function fetchAdsbMessages() {
+// Database connection details would be configured here
+const db = pgp('postgresql://postgres:sagetech123@localhost:5432/database');
+
+// Function to retrieve and display the latest ADS-B messages from the database
+async function fetchLatestAdsbMessages() {
     try {
-        const response = await axios.get(`${brokerUri}/message`);
-        console.log('ADS-B Messages:', response.data);
+        const messages = await db.any('SELECT * FROM adsb_messages ORDER BY timestamp DESC LIMIT 10', []);
+        console.log('Latest ADS-B Messages:', messages);
     } catch (error) {
-        console.error('Error fetching messages:', error);
+        console.error('Error fetching ADS-B messages:', error);
     }
 }
 
-fetchAdsbMessages();
+// Call the function to fetch and display messages
+fetchLatestAdsbMessages();
