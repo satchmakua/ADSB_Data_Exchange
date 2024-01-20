@@ -1,22 +1,24 @@
 // Import required libraries and modules
 const express = require('express')
+const proxy = require('http-proxy')
 const http = require('http')
 const bodyParser = require('body-parser') // Middleware for parsing HTTP request bodies
 const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
-const users = require('./routes/users') // User-related routes
-const oauth = require('./routes/oauth') // OAuth routes
+
+const WebSocket = require('ws') // WebSocket setup for ADS-B
+
+// Define user service and oauth service urls for proxy service
+let user = 'http://localhost:3001'
+let auth = 'http://localhost:3002'
 
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000 // Use the specified port or default to 3000
 const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database'
 
-// WebSocket setup for ADS-B
-const WebSocket = require('ws')
-
 // Create an Express application
 const app = express()
-
+const proxyService = proxy.createProxyServer()
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
 
@@ -29,9 +31,18 @@ app.use(bodyParser.json())
 // Establish a connection to the PostgreSQL database
 const db = pgp(DB_URI)
 
-// Define routes and route handlers
-app.use('/users', users)
-app.use('/oauth', oauth)
+// Forward API call to the appropriate service
+app.all("/usr/*", function (req, res)
+{
+    proxyService.web(req, res, { target: user })
+    // TO DO: Will this automagically return a response to the client?
+})
+
+app.all("/auth/*", function (req, res)
+{
+    proxyService.web(req, res, { target: auth })
+    // TO DO: Will this automagically return a response to the client?
+})
 
 app.get('/groundstation/websocket', (req, res) =>
 {
@@ -45,8 +56,8 @@ wss.on('connection', function connection(ws)
         let data = JSON.parse(message)
 
         // TO DO: feed incoming messages into database
-        //console.log(data.messageData)
-        //console.log(data.timeStamp)
+        console.log((data.messageData).toString(16))
+        console.log(data.timeStamp)
     })
 })
 
@@ -58,6 +69,9 @@ app.on('upgrade', (request, socket, head) =>
         wss.emit('connection', ws, request)
     })
 })
+
+/*
+Pushing messages onto the database should be done in the websocket connection above
 
 // Route to handle POST requests to store messages in the database
 app.post('/message', async (req, res) =>
@@ -72,6 +86,7 @@ app.post('/message', async (req, res) =>
         res.status(500).send("Error storing message: " + err)
     }
 })
+*/
 
 // Route to handle GET requests to fetch messages from the database
 app.get('/message', async (req, res) =>
