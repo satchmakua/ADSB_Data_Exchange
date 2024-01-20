@@ -9,11 +9,11 @@ const {
    postRefresh,
 } = require('../controllers/oauth_controller')
 
-router.post('/register', postRegister)
-router.post('/login', postLogin)
-router.post('/callback', postCallback)
+router.post('/auth/register', postRegister)
+router.post('/auth/login', postLogin)
+router.post('/auth/callback', postCallback)
 /* maybe delete for logout */
-router.post('/logout', postLogout)
-router.post('/refresh', postRefresh)
+router.post('/auth/logout', postLogout)
+router.post('/auth/refresh', postRefresh)
 
 module.exports = router
