@@ -1,6 +1,6 @@
 // Import required libraries and modules
 const express = require('express')
-const proxy = require('http-proxy')
+const proxy = require('express-http-proxy')
 const http = require('http')
 const bodyParser = require('body-parser') // Middleware for parsing HTTP request bodies
 const pgp = require('pg-promise')() // PostgreSQL database library
@@ -18,7 +18,6 @@ const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhos
 
 // Create an Express application
 const app = express()
-const proxyService = proxy.createProxyServer()
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
 
@@ -32,17 +31,8 @@ app.use(bodyParser.json())
 const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
-app.all("/usr/*", function (req, res)
-{
-    proxyService.web(req, res, { target: user })
-    // TO DO: Will this automagically return a response to the client?
-})
-
-app.all("/auth/*", function (req, res)
-{
-    proxyService.web(req, res, { target: auth })
-    // TO DO: Will this automagically return a response to the client?
-})
+app.all("/users/*", proxy(user))
+app.all("/auth/*", proxy(auth))
 
 app.get('/groundstation/websocket', (req, res) =>
 {
@@ -126,6 +116,7 @@ app.use((err, req, res, next) =>
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) =>
 {
+    console.log('undefined route in broker service')
     res.status(404).send("Could not find resource!")
 })
 
