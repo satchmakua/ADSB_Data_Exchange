@@ -1,4 +1,6 @@
 // Import required libraries and modules
+<<<<<<< brokerService/broker.js
+=======
 const express = require('express')
 const proxy = require('express-http-proxy')
 const http = require('http')
@@ -7,27 +9,51 @@ const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
+>>>>>>> brokerService/broker.js
 
 // Define user service and oauth service urls for proxy service
-let user = 'http://localhost:3001'
-let auth = 'http://localhost:3002'
+let user = 'http://localhost:3001';
+let auth = 'http://localhost:3002';
 
 // Define the server's port number and database connection URI
-const PORT = process.env.PORT || 3000 // Use the specified port or default to 3000
-const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database'
+const PORT = process.env.PORT || 3000;
+const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database';
 
 // Create an Express application
+<<<<<<< brokerService/broker.js
+=======
 const app = express()
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
 
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
+>>>>>>> brokerService/broker.js
 
-// Use the body-parser middleware to parse JSON data from request bodies
-app.use(bodyParser.json())
+// Enable Cross-Origin Resource Sharing (CORS) and parse JSON data from request bodies
+app.use(cors());
+app.use(bodyParser.json());
 
 // Establish a connection to the PostgreSQL database
+<<<<<<< brokerService/broker.js
+
+// Handle WebSocket connections
+wss.on('connection', function connection(ws) {
+    ws.on('message', function incoming(message) {
+        let data = JSON.parse(message);
+        console.log('Received message:', data);
+
+        // Inserting messages into the database
+        db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
+            .then(() => {
+                console.log('Message successfully inserted into database');
+            })
+            .catch(err => {
+                console.error('Error inserting message into database:', err);
+            });
+    });
+});
+=======
 const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
@@ -39,42 +65,26 @@ app.get('/groundstation/websocket', (req, res) =>
     const ws = new WebSocket('ws://localhost:3000')
 })
 
-wss.on('connection', function connection(ws)
-{
-    ws.on('message', function incoming(message)
-    {
-        let data = JSON.parse(message)
-
-        // TO DO: feed incoming messages into database
-        console.log((data.messageData).toString(16))
-        console.log(data.timeStamp)
-    })
-})
+>>>>>>> brokerService/broker.js
 
 // Handle WebSocket upgrade requests
-app.on('upgrade', (request, socket, head) =>
-{
-    wss.handleUpgrade(request, socket, head, (ws) =>
-    {
-        wss.emit('connection', ws, request)
-    })
-})
+app.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+});
 
-/*
-Pushing messages onto the database should be done in the websocket connection above
-
-// Route to handle POST requests to store messages in the database
-app.post('/message', async (req, res) =>
-{
-    const { content, groundStationId } = req.body
-    try
-    {
-        await db.none('INSERT INTO messages(content, timestamp, groundStationId) VALUES($1, NOW(), $2)', [content, groundStationId])
-        res.status(201).send("Message stored!")
-    } catch (err)
-    {
-        res.status(500).send("Error storing message: " + err)
+// GET route to fetch messages from the database
+app.get('/message', async (req, res) => {
+    try {
+        const messages = await db.any('SELECT * FROM adsb_messages');
+        res.status(200).json(messages);
+    } catch (err) {
+        res.status(500).send("Error fetching messages: " + err);
     }
+<<<<<<< brokerService/broker.js
+
+=======
 })
 */
 
@@ -119,17 +129,16 @@ app.use((req, res, next) =>
     console.log('undefined route in broker service')
     res.status(404).send("Could not find resource!")
 })
+>>>>>>> brokerService/broker.js
 
 // Start the server and listen on the specified port
-server.listen(PORT, () =>
-{
-    console.log(`Broker service running on port ${PORT}`)
-})
+server.listen(PORT, () => {
+    console.log(`Broker service running on port ${PORT}`);
+});
 
 // Gracefully shut down on SIGINT (Ctrl-C)
-process.on('SIGINT', function ()
-{
-    console.log("\nGracefully shutting down from SIGINT (Ctrl-C)")
-    pgp.end()  // Close the database connection
-    process.exit(0)
-})
+process.on('SIGINT', function () {
+    console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
+    pgp.end();  // Close the database connection
+    process.exit(0);
+});
