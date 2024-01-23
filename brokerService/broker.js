@@ -18,7 +18,6 @@ const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhos
 
 // Create an Express application
 const app = express()
-//const proxyService = proxy.createProxyServer()
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
 
@@ -33,24 +32,7 @@ const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
 app.all("/users/*", proxy(user))
-/*
-{
-    //console.log('forwarding api call ')
-    //console.log('\nreq\n', req);
-    //proxyService.web(req, res, { target: user })
-    //console.log('\n\nres\n', res)
-    //res.status(200).send('done status')
-    // TO DO: Will this automagically return a response to the client?
-})
-*/
-
 app.all("/auth/*", proxy(auth))
-/*
-{
-    //proxyService.web(req, res, { target: auth })
-    // TO DO: Will this automagically return a response to the client?
-})
-*/
 
 app.get('/groundstation/websocket', (req, res) =>
 {
