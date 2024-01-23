@@ -31,29 +31,29 @@ router.get('', getUsers)
 
 router.get('/:id', getID)
 
-router.delete('/usr/:id', deleteID)
+router.delete('/:id', deleteID)
 
-router.put('/users/:id', putID)
+router.put('/:id', putID)
 
-router.get('/users/:id/client/connect', getConnect)
+router.get('/:id/client/connect', getConnect)
 
-router.put('/users/:id/client/disconnect', putDisconnect)
+router.put('/:id/client/disconnect', putDisconnect)
 
-router.post('/users/:id/devices', postDevices)
+router.post('/:id/devices', postDevices)
 
 //router.get('/:id/devices?limit=<param>&start[< "l,g" + "e, ">]=<param>', getDevices)
-router.get('/users/:id/devices', getDevices)
+router.get('/:id/devices', getDevices)
 
-router.get('/users/:id/devices/:deviceid', getUserDevices)
+router.get('/:id/devices/:deviceid', getUserDevices)
 
-router.delete('/users/:id/devices/:deviceid', deleteUserDevices)
+router.delete('/:id/devices/:deviceid', deleteUserDevices)
 
-router.put('/users/:id/devices/:deviceid', putUserDevices)
+router.put('/:id/devices/:deviceid', putUserDevices)
 
 //router.get('/:id/devices/:id/connect', getConnectUserDevices)
 
 //router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices)
 
-router.get('/users/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
+router.get('/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
 
 module.exports = router

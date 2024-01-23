@@ -46,7 +46,7 @@ app.use(bodyParser.json())
 
   /* User routes */
 const users = require('./routes/users') 
-//app.use('/users', users)
+app.use('/users', users)
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) => 
@@ -61,9 +61,6 @@ app.use((req, res, next) =>
    console.log('undefined route in user service');
    res.status(404).send("Could not find resource!")
 })
-
-//app.all('request recieved')
-
 
 const http = require('http')
 const server = http.createServer(app)
