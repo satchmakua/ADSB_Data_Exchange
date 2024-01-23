@@ -1,6 +1,5 @@
 // Import required libraries and modules
-<<<<<<< brokerService/broker.js
-=======
+
 const express = require('express')
 const proxy = require('express-http-proxy')
 const http = require('http')
@@ -9,7 +8,6 @@ const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
->>>>>>> brokerService/broker.js
 
 // Define user service and oauth service urls for proxy service
 let user = 'http://localhost:3001';
@@ -20,22 +18,18 @@ const PORT = process.env.PORT || 3000;
 const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database';
 
 // Create an Express application
-<<<<<<< brokerService/broker.js
-=======
 const app = express()
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
 
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
->>>>>>> brokerService/broker.js
 
 // Enable Cross-Origin Resource Sharing (CORS) and parse JSON data from request bodies
 app.use(cors());
 app.use(bodyParser.json());
 
 // Establish a connection to the PostgreSQL database
-<<<<<<< brokerService/broker.js
 
 // Handle WebSocket connections
 wss.on('connection', function connection(ws) {
@@ -53,7 +47,7 @@ wss.on('connection', function connection(ws) {
             });
     });
 });
-=======
+
 const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
@@ -65,7 +59,6 @@ app.get('/groundstation/websocket', (req, res) =>
     const ws = new WebSocket('ws://localhost:3000')
 })
 
->>>>>>> brokerService/broker.js
 
 // Handle WebSocket upgrade requests
 app.on('upgrade', (request, socket, head) => {
@@ -82,23 +75,7 @@ app.get('/message', async (req, res) => {
     } catch (err) {
         res.status(500).send("Error fetching messages: " + err);
     }
-<<<<<<< brokerService/broker.js
 
-=======
-})
-*/
-
-// Route to handle GET requests to fetch messages from the database
-app.get('/message', async (req, res) =>
-{
-    try
-    {
-        const messages = await db.any('SELECT * FROM messages')
-        res.status(200).json(messages)
-    } catch (err)
-    {
-        res.status(500).send("Error fetching messages: " + err)
-    }
 })
 
 // Placeholder routes for subscribing and unsubscribing (TODO: Implement logic)
@@ -129,7 +106,6 @@ app.use((req, res, next) =>
     console.log('undefined route in broker service')
     res.status(404).send("Could not find resource!")
 })
->>>>>>> brokerService/broker.js
 
 // Start the server and listen on the specified port
 server.listen(PORT, () => {
