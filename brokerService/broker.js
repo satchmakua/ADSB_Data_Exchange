@@ -35,10 +35,10 @@ const db = pgp(DB_URI)
 app.all("/users/*", function (req, res)
 {
     console.log('forwarding api call ')
-    console.log('req ', req);
+    //console.log('\nreq\n', req);
     proxyService.web(req, res, { target: user })
-    console.log('done')
-    res.status(200).send('done status')
+    console.log('\n\nres\n', res)
+    //res.status(200).send('done status')
     // TO DO: Will this automagically return a response to the client?
 })
 
