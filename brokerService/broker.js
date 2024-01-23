@@ -1,6 +1,6 @@
 // Import required libraries and modules
 const express = require('express')
-const proxy = require('http-proxy')
+const proxy = require('express-http-proxy')
 const http = require('http')
 const bodyParser = require('body-parser') // Middleware for parsing HTTP request bodies
 const pgp = require('pg-promise')() // PostgreSQL database library
@@ -18,7 +18,7 @@ const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhos
 
 // Create an Express application
 const app = express()
-const proxyService = proxy.createProxyServer()
+//const proxyService = proxy.createProxyServer()
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
 
@@ -32,21 +32,25 @@ app.use(bodyParser.json())
 const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
-app.all("/users/*", function (req, res)
+app.all("/users/*", proxy(user))
+/*
 {
-    console.log('forwarding api call ')
+    //console.log('forwarding api call ')
     //console.log('\nreq\n', req);
-    proxyService.web(req, res, { target: user })
-    console.log('\n\nres\n', res)
+    //proxyService.web(req, res, { target: user })
+    //console.log('\n\nres\n', res)
     //res.status(200).send('done status')
     // TO DO: Will this automagically return a response to the client?
 })
+*/
 
-app.all("/auth/*", function (req, res)
+app.all("/auth/*", proxy(auth))
+/*
 {
-    proxyService.web(req, res, { target: auth })
+    //proxyService.web(req, res, { target: auth })
     // TO DO: Will this automagically return a response to the client?
 })
+*/
 
 app.get('/groundstation/websocket', (req, res) =>
 {
