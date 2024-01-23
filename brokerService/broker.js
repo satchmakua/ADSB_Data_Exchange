@@ -32,9 +32,13 @@ app.use(bodyParser.json())
 const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
-app.all("/usr/*", function (req, res)
+app.all("/users/*", function (req, res)
 {
+    console.log('forwarding api call ')
+    console.log('req ', req);
     proxyService.web(req, res, { target: user })
+    console.log('done')
+    res.status(200).send('done status')
     // TO DO: Will this automagically return a response to the client?
 })
 
@@ -126,6 +130,7 @@ app.use((err, req, res, next) =>
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) =>
 {
+    console.log('undefined route in broker service')
     res.status(404).send("Could not find resource!")
 })
 

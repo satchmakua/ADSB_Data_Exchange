@@ -10,24 +10,24 @@ require('dotenv').config
    })
 
 /* Postgress database */
-const pgp = require('pg-promise')()
+//const pgp = require('pg-promise')()
 
-async function connection() {
-   const db = pgp({
-      user: process.env.USER,
-      host: process.env.HOST,
-      database: process.env.DATABASE,
-      password: process.env.PASSWORD,
-      port: process.env.DBPORT
-   });
-   return await db.connect()
-}
+// async function connection() {
+//    const db = pgp({
+//       user: "janna",
+//       host: "localhost",
+//       database: "postgres",
+//       password: "password",
+//       port: 5432
+//    });
+//    return await db.connect()
+// }
 
+// const client = connection();
+// setTimeout(() => {  console.log('World!'); }, 2000);
+// console.log('client: ', client);
 
-//const client = db.connect()
-//setTimeout(() => {  console.log('World!'); }, 2000);
-
-const PORT = process.env.PORT || 3005 
+const PORT = process.env.PORT || 3001 
 
 const app = express()
 app.use(bodyParser.json())
@@ -46,24 +46,27 @@ app.use(bodyParser.json())
 
   /* User routes */
 const users = require('./routes/users') 
-app.use('/users', users)
+//app.use('/users', users)
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) => 
 {
-   console.error(err.stack)
+   console.error('server error ',err.stack)
    res.status(500).send('Something went wrong!')
 })
 
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) => 
 {
+   console.log('undefined route in user service');
    res.status(404).send("Could not find resource!")
 })
 
+//app.all('request recieved')
 
-const http = require('http');
-const server = http.createServer(app);
+
+const http = require('http')
+const server = http.createServer(app)
 server.listen(PORT, () => 
 {
    console.log(`Users service running on port ${PORT}`)

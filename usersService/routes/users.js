@@ -20,40 +20,40 @@ const {
     getAdsbUserDevices,
 } = require('../controllers/users_controller')
 
-router.post('/usr/', postUsers)
+router.post('/', postUsers)
 
-router.post('/usr/validate', isValidUser)
+router.post('/validate', isValidUser)
 
 // router.get('?limit=<param>&start[< "l,g" + "e, ">]=<param>',
 // getUsers)
 // once query is implemented uncomment line 24 and delete below line
-router.get('/usr/', getUsers)
+router.get('', getUsers)
 
-router.get('/usr/:id', getID)
+router.get('/:id', getID)
 
 router.delete('/usr/:id', deleteID)
 
-router.put('/usr/:id', putID)
+router.put('/users/:id', putID)
 
-router.get('/usr/:id/client/connect', getConnect)
+router.get('/users/:id/client/connect', getConnect)
 
-router.put('/usr/:id/client/disconnect', putDisconnect)
+router.put('/users/:id/client/disconnect', putDisconnect)
 
-router.post('/usr/:id/devices', postDevices)
+router.post('/users/:id/devices', postDevices)
 
 //router.get('/:id/devices?limit=<param>&start[< "l,g" + "e, ">]=<param>', getDevices)
-router.get('/usr/:id/devices', getDevices)
+router.get('/users/:id/devices', getDevices)
 
-router.get('/usr/:id/devices/:deviceid', getUserDevices)
+router.get('/users/:id/devices/:deviceid', getUserDevices)
 
-router.delete('/usr/:id/devices/:deviceid', deleteUserDevices)
+router.delete('/users/:id/devices/:deviceid', deleteUserDevices)
 
-router.put('/usr/:id/devices/:deviceid', putUserDevices)
+router.put('/users/:id/devices/:deviceid', putUserDevices)
 
 //router.get('/:id/devices/:id/connect', getConnectUserDevices)
 
 //router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices)
 
-router.get('/usr/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
+router.get('/users/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
 
 module.exports = router
