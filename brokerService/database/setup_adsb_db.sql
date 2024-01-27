@@ -9,8 +9,3 @@ CREATE TABLE adsb_messages (
     timestamp TIMESTAMP NOT NULL                 -- The timestamp for when the message was received.
 );
 
--- Inserting dummy data into the adsb_messages table
-INSERT INTO adsb_messages (message_data, timestamp) VALUES
-    ('{"type": "position_report", "content": {"altitude": 38000, "speed": 450, "heading": 90}}', NOW()),
-    ('{"type": "identification_report", "content": {"callsign": "WSUV01", "aircraft_type": "B738"}}', NOW()),
-    ('{"type": "velocity_report", "content": {"vertical_rate": -640, "groundspeed": 460}}', NOW());
