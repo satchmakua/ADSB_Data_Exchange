@@ -32,7 +32,7 @@ app.use(function (req, res, next)
 
 /* OAuth routes */
 const oauth = require('./routes/oauth')
-app.use('/oauth', oauth)
+app.use(oauth)
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) => 
