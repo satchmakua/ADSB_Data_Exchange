@@ -16,6 +16,7 @@ let auth = 'http://localhost:3002';
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000;
 const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database';
+const db = pgp(DB_URI)
 
 // Create an Express application
 const app = express()
@@ -47,8 +48,6 @@ wss.on('connection', function connection(ws) {
             });
     });
 });
-
-const db = pgp(DB_URI)
 
 // Forward API call to the appropriate service
 app.all("/users/*", proxy(user))
@@ -111,6 +110,17 @@ app.use((req, res, next) =>
 server.listen(PORT, () => {
     console.log(`Broker service running on port ${PORT}`);
 });
+
+db.connect()
+  .then(obj => {
+      console.log('Connected to the database');
+      obj.done(); // success, release the connection;
+  })
+  .catch(error => {
+      console.log('ERROR:', error.message || error);
+  });
+
+console.log(`Database URI: ${DB_URI}`);
 
 // Gracefully shut down on SIGINT (Ctrl-C)
 process.on('SIGINT', function () {
