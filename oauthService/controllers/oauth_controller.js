@@ -7,10 +7,11 @@ const {
    genAuthTokens,
    genOAuthCode,
    genAccessToken,
-   findUserByToken,
-   findUserByCredentials,
+   // findUserByToken,
+   // findUserByCredentials,
    removeToken,
-   createUser,
+   removeAuthCode,
+   // createUser,
 } = require('../methods/oauth_methods')
 
 const client = require('../database/db.js')
@@ -19,36 +20,44 @@ const client = require('../database/db.js')
 
 
 /* Function for registering */
-postRegister = async (req, res) =>
-{
-   const body = R.pick(['username', 'email', 'password'], req.body)
-   try
-   {
-      const user = await createUser(body.username, body.email, body.password, client)
-      const token = await genAuthTokens(user, client)
-      await res.header('x-auth', token).send(body.name)
-   }
-   catch (e)
-   {
-      res.status(400).send(
-         {
-            code: 400,
-            message: e,
-         }
-      )
-   }
-}
+// postRegister = async (req, res) =>
+// {
+//    const body = R.pick(['username', 'email', 'password'], req.body)
+//    try
+//    {
+//       const user = await createUser(body.username, body.email, body.password, client)
+//       const token = await genAuthTokens(user, client)
+//       await res.header('x-auth', token).send(body.name)
+//    }
+//    catch (e)
+//    {
+//       res.status(400).send(
+//          {
+//             code: 400,
+//             message: e,
+//          }
+//       )
+//    }
+// }
 
 
 /* Function for handling OAuth login */
 postLogin = async (req, res) =>
 {
-   const body = R.pick(['email', 'password'], req.body) /* or username? */
+   // const body = R.pick(['email', 'password'], req.body) /* or username? */
+   const body = R.pick(['id'], req.body)
+   /* verify access token */
    try 
    {
-      const user = await findUserByCredentials(client, body.email, body.password)
-      const token = await genAuthTokens(user, client)
-      res.header('x-auth', token).send(R.pick(['username'], user))
+      //const user = await findUserByCredentials(client, body.email, body.password)
+      // const token = await genAuthTokens(user, client)
+      // res.header('x-auth', token).send(R.pick(['username'], user))
+      const token = await genAccessToken(body, client) // make refresh token 
+      res.header('x-auth', token).json(
+         {
+            code: 200,
+            message: 'succeeded',
+         })
    }
    catch (e)
    {
@@ -66,12 +75,14 @@ postLogin = async (req, res) =>
 /* Function for handling OAuth logout */
 postLogout = async (req, res) =>
 { /* DELETE since getting deleting token and access */
-   const body = R.pick(['username'], req.body)
-   removeToken(body.username, client/*req.token*/).then(
+   //const body = R.pick(['username'], req.body)
+   const body = R.pick(['id', 'token'], req.body)
+   //removeToken(body.username, client/*req.token*/).then(
+   removeToken(body, client).then(
       res.status(200).json(
          {
             'code': 200,
-            'message': 'logout successful',
+            'message': 'succeeded',
          })
    ).catch((e) =>
    {
@@ -87,6 +98,10 @@ postLogout = async (req, res) =>
 /* Function for refreshing OAuth tokens */
 postRefresh = (req, res) =>
 {
+   // get id and refresh token 
+   /* delete old token */
+   /* create new access and refresh token */
+   /* return access, refresh, and time created */
    res.status(200).json({ "oauth": "token refreshed" })
 }
 
@@ -102,7 +117,7 @@ postCallback = (req, res) =>
 
 
 module.exports = {
-   postRegister,
+   //postRegister,
    postLogin,
    postRefresh,
    postLogout,

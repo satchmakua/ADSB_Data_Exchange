@@ -17,11 +17,18 @@ CREATE TABLE users
 
 CREATE TABLE auth
 (
-	user_id serial,
-	access_token text,
-	refresh_token text,
-	FOREIGN KEY(user_id) REFERENCES users(id)
+	userId serial PRIMARY KEY,
+	accessToken text,
+	refreshToken text,
+   createdAT timestamp NOT NULL default current_timestamp,
+	--FOREIGN KEY(user_id) REFERENCES users(id)
 ) WITH (OIDS = FALSE);
 
-SELECT * from users;
-SELECT * from auth;
+CREATE TABLE oauth
+(
+	userId serial PRIMARY KEY,
+	authCode text,
+	--FOREIGN KEY(userId) REFERENCES users(id)
+) WITH (OIDS = FALSE);
+-- SELECT * from users;
+-- SELECT * from auth;
