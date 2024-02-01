@@ -6,39 +6,12 @@ const path = require('path')
 require('dotenv').config(
    {
       override: true,
-      path: path.join(__dirname, 'dev.env')
+      path: path.join(__dirname, '../dev.env')
    })
 
-/* Postgress database */
-//const pgp = require('pg-promise')()
 
 
-/*
-async function connection() {
-   const db = pgp({
-      user: process.env.USER,
-      host: process.env.HOST,
-      database: process.env.DATABASE,
-      password: process.env.PASSWORD,
-      port: process.env.DBPORT
-   });
-   return await db.connect()
-}*/
-
-
-
-//const client = db.connect()
-//setTimeout(() => {  console.log('World!'); }, 2000);
-
-
-/*
-const { genAuthTokens } = require('./methods/oauth_methods');
-const { none } = require('ramda');
-connection().then((obj) => { genAuthTokens('alex', obj)})
-*/
-
-
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3002
 
 
 const app = express()
@@ -81,10 +54,6 @@ server.listen(PORT, () =>
 {
    console.log(`Oauth service running on port ${PORT}`)
 })
-// app.listen(PORT, () => 
-// {
-//    console.log(`Oauth service running on port ${PORT}. Databse listening at ${process.env.DBPORT}`)
-// })
 
 
 

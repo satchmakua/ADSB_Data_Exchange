@@ -32,3 +32,4 @@ CREATE TABLE oauth
 ) WITH (OIDS = FALSE);
 -- SELECT * from users;
 -- SELECT * from auth;
+-- sudo -u sage psql -d AUTH_TOKENS
