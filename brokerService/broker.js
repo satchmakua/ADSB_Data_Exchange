@@ -32,20 +32,24 @@ app.use(bodyParser.json());
 // Establish a connection to the PostgreSQL database
 
 // Handle WebSocket connections
-wss.on('connection', function connection(ws) {
-    ws.on('message', function incoming(message) {
-        let data = JSON.parse(message);
-        console.log('Received message:', data);
+wss.on('connection', function connection(ws)
+{
+   ws.on('message', function incoming(message)
+   {
+      let data = JSON.parse(message);
+      console.log('Received message:', data);
 
-        // Inserting messages into the database
-        db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
-            .then(() => {
-                console.log('Message successfully inserted into database');
-            })
-            .catch(err => {
-                console.error('Error inserting message into database:', err);
-            });
-    });
+      // Inserting messages into the database
+      db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
+         .then(() =>
+         {
+            console.log('Message successfully inserted into database');
+         })
+         .catch(err =>
+         {
+            console.error('Error inserting message into database:', err);
+         });
+   });
 });
 
 const db = pgp(DB_URI)
@@ -56,65 +60,72 @@ app.all("/auth/*", proxy(auth))
 
 app.get('/groundstation/websocket', (req, res) =>
 {
-    const ws = new WebSocket('ws://localhost:3000')
+   const ws = new WebSocket('ws://localhost:3000')
 })
 
 
 // Handle WebSocket upgrade requests
-app.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-    });
+app.on('upgrade', (request, socket, head) =>
+{
+   wss.handleUpgrade(request, socket, head, (ws) =>
+   {
+      wss.emit('connection', ws, request);
+   });
 });
 
 // GET route to fetch messages from the database
-app.get('/message', async (req, res) => {
-    try {
-        const messages = await db.any('SELECT * FROM adsb_messages');
-        res.status(200).json(messages);
-    } catch (err) {
-        res.status(500).send("Error fetching messages: " + err);
-    }
+app.get('/message', async (req, res) =>
+{
+   try
+   {
+      const messages = await db.any('SELECT * FROM adsb_messages');
+      res.status(200).json(messages);
+   } catch (err)
+   {
+      res.status(500).send("Error fetching messages: " + err);
+   }
 
 })
 
 // Placeholder routes for subscribing and unsubscribing (TODO: Implement logic)
 app.post('/subscribe', async (req, res) =>
 {
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to add the topic to the subscriber's list of subscriptions
-    res.status(200).send("Subscribed successfully!")
+   const { subscriberId, topic } = req.body
+   // TODO: Logic to add the topic to the subscriber's list of subscriptions
+   res.status(200).send("Subscribed successfully!")
 })
 
 app.post('/unsubscribe', async (req, res) =>
 {
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to remove the topic from the subscriber's list of subscriptions
-    res.status(200).send("Unsubscribed successfully!")
+   const { subscriberId, topic } = req.body
+   // TODO: Logic to remove the topic from the subscriber's list of subscriptions
+   res.status(200).send("Unsubscribed successfully!")
 })
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) =>
 {
-    console.error(err.stack)
-    res.status(500).send('Something went wrong!')
+   console.error(err.stack)
+   res.status(500).send('Something went wrong!')
 })
 
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) =>
 {
-    console.log('undefined route in broker service')
-    res.status(404).send("Could not find resource!")
+   console.log('undefined route in broker service')
+   res.status(404).send("Could not find resource!")
 })
 
 // Start the server and listen on the specified port
-server.listen(PORT, () => {
-    console.log(`Broker service running on port ${PORT}`);
+server.listen(PORT, () =>
+{
+   console.log(`Broker service running on port ${PORT}`);
 });
 
 // Gracefully shut down on SIGINT (Ctrl-C)
-process.on('SIGINT', function () {
-    console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
-    pgp.end();  // Close the database connection
-    process.exit(0);
+process.on('SIGINT', function ()
+{
+   console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
+   pgp.end();  // Close the database connection
+   process.exit(0);
 });
