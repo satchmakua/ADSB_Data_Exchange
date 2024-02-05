@@ -64,15 +64,15 @@ wss.on('connection', function connection(ws) {
     })
 })
 
-// Middleware to authenticate WebSocket connections
-wss.on('connection', (ws, req) => {
-    // Placeholder for authentication check, e.g., via token in query params
-    const token = req.url.split('token=')[1]; // Simplified example
-    if (!token || token !== 'expectedToken') {
-        ws.terminate(); // Close connection if not authenticated
-        console.log('WebSocket connection closed due to failed authentication');
-    }
-});
+// // Middleware to authenticate WebSocket connections
+// wss.on('connection', (ws, req) => {
+//     // Placeholder for authentication check, e.g., via token in query params
+//     const token = req.url.split('token=')[1]; // Simplified example
+//     if (!token || token !== 'expectedToken') {
+//         ws.terminate(); // Close connection if not authenticated
+//         console.log('WebSocket connection closed due to failed authentication');
+//     }
+// });
 
 // Forward API call to the appropriate service
 app.all("/users/*", proxy(user))
