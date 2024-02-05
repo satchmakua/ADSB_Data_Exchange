@@ -1,5 +1,6 @@
-// Import required libraries and modules
+// Broker Component - ADS-B Restful Data Exchange
 
+// Import required libraries and modules
 const express = require('express')
 const proxy = require('express-http-proxy')
 const http = require('http')
@@ -63,6 +64,16 @@ wss.on('connection', function connection(ws) {
     })
 })
 
+// Middleware to authenticate WebSocket connections
+wss.on('connection', (ws, req) => {
+    // Placeholder for authentication check, e.g., via token in query params
+    const token = req.url.split('token=')[1]; // Simplified example
+    if (!token || token !== 'expectedToken') {
+        ws.terminate(); // Close connection if not authenticated
+        console.log('WebSocket connection closed due to failed authentication');
+    }
+});
+
 // Forward API call to the appropriate service
 app.all("/users/*", proxy(user))
 app.all("/auth/*", proxy(auth))
@@ -99,6 +110,30 @@ app.post('/subscribe', async (req, res) =>
     res.status(200).send("Subscribed successfully!")
 })
 
+// Actual implementation for subscription management
+const subscriptions = {}; // Simplified example to keep track of subscriptions
+
+app.post('/subscribe', (req, res) => {
+    const { subscriberId, topic } = req.body;
+    if (!subscriptions[subscriberId]) {
+        subscriptions[subscriberId] = new Set();
+    }
+    subscriptions[subscriberId].add(topic);
+    console.log(`Subscriber ${subscriberId} added to topic ${topic}`);
+    res.status(200).json({ message: `Subscribed to topic ${topic}` });
+});
+
+app.post('/unsubscribe', (req, res) => {
+    const { subscriberId, topic } = req.body;
+    if (subscriptions[subscriberId] && subscriptions[subscriberId].has(topic)) {
+        subscriptions[subscriberId].delete(topic);
+        console.log(`Subscriber ${subscriberId} removed from topic ${topic}`);
+        res.status(200).json({ message: `Unsubscribed from topic ${topic}` });
+    } else {
+        res.status(404).json({ message: `Subscription not found for topic ${topic}` });
+    }
+});
+
 app.post('/unsubscribe', async (req, res) =>
 {
     const { subscriberId, topic } = req.body
@@ -112,6 +147,12 @@ app.use((err, req, res, next) =>
     console.error(err.stack)
     res.status(500).send('Something went wrong!')
 })
+
+// Middleware for logging request details
+app.use((req, res, next) => {
+    console.log(`Received ${req.method} request for ${req.url} from ${req.ip}`);
+    next();
+});
 
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) =>
@@ -142,3 +183,22 @@ process.on('SIGINT', function () {
     pgp.end()  // Close the database connection
     process.exit(0)
 })
+
+// Clean shutdown logic for WebSocket server
+const shutdown = () => {
+    console.log('Shutting down server...');
+    server.close(() => {
+        console.log('HTTP server closed.');
+        wss.close(() => {
+            console.log('WebSocket server closed.');
+            pgp.end().then(() => {
+                console.log('Database connections closed.');
+                process.exit(0);
+            });
+        });
+    });
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
