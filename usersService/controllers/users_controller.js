@@ -1,6 +1,7 @@
 const Pool = require('pg').Pool
 const crypto = require('crypto')
 
+
 // TO-DO: set db up on WSU server and update these settings
 
 const pool = new Pool({
@@ -23,6 +24,7 @@ const pool = new Pool({
 //    password: process.env.PASSWORD,
 //    port: process.env.DBPORT
 // });
+
 
 standardReturn = (res, error, results, errCode, customErrStr) =>
 {

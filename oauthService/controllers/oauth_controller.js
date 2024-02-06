@@ -7,38 +7,13 @@ const {
    genAuthTokens,
    genOAuthCode,
    genAccessToken,
-   // findUserByToken,
-   // findUserByCredentials,
    removeToken,
    removeAuthCode,
-   // createUser,
 } = require('../methods/oauth_methods')
 
 const client = require('../database/db.js')
 
 
-
-
-/* Function for registering */
-// postRegister = async (req, res) =>
-// {
-//    const body = R.pick(['username', 'email', 'password'], req.body)
-//    try
-//    {
-//       const user = await createUser(body.username, body.email, body.password, client)
-//       const token = await genAuthTokens(user, client)
-//       await res.header('x-auth', token).send(body.name)
-//    }
-//    catch (e)
-//    {
-//       res.status(400).send(
-//          {
-//             code: 400,
-//             message: e,
-//          }
-//       )
-//    }
-// }
 
 
 /* Function for handling OAuth login */
