@@ -1,5 +1,6 @@
 -- Drop the existing database if it exists
-DROP DATABASE IF EXISTS database;
+-- NOTE: make sure that name matches name specific in dev.env
+DROP DATABASE IF EXISTS MESSAGE_DB;
 
 -- Create the database
-CREATE DATABASE database;
+CREATE DATABASE MESSAGE_DB;

@@ -9,7 +9,7 @@ const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
-
+const db = require('../database/db.js')
 
 // Function to help troubleshoot db connection issues
 function logDbConnectionDetails(db) {
@@ -30,8 +30,8 @@ let auth = 'http://localhost:3002'
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000
 const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database'
-const db = pgp(DB_URI)
-logDbConnectionDetails(db)
+// const db = pgp(DB_URI)
+// logDbConnectionDetails(db)
 
 // Create an Express application
 const app = express()

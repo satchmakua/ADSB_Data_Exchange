@@ -9,7 +9,7 @@ require('dotenv').config
 const client = pgp({
    user: process.env.USER,
    host: process.env.HOST,
-   database: process.env.DBAUTH,
+   database: process.env.DBMSG,
    password: process.env.PASSWORD,
    port: process.env.DBPORT
 });
