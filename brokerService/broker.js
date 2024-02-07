@@ -9,7 +9,7 @@ const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
-const db = require('../database/db.js')
+const db = require('./database/db.js')
 
 // Function to help troubleshoot db connection issues
 function logDbConnectionDetails(db) {
