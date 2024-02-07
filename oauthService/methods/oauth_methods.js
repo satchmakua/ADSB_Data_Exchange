@@ -119,6 +119,19 @@ async function removeAuthCode(user, client)
 
 
 
+// async function createUser(username, email, password, client)
+// {
+//    //await client.query('BEGIN')
+
+//    await client.query(`INSERT INTO users (username, email, password) VALUES ('${username}', '${email}', '${password}')`)
+//    const user = await client.query(`SELECT * FROM users WHERE username='${username}';`)
+//    await client.query('COMMIT')
+
+
+//    return user
+// }
+
+
 
 
 module.exports = {
