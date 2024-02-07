@@ -80,7 +80,7 @@ app.all("/auth/*", proxy(auth))
 
 app.get('/groundstation/websocket', (req, res) =>
 {
-    const ws = new WebSocket('ws://localhost:3000')
+   const ws = new WebSocket('ws://localhost:3000')
 })
 
 
@@ -105,9 +105,9 @@ app.get('/message', async (req, res) => {
 // Placeholder routes for subscribing and unsubscribing (TODO: Implement logic)
 app.post('/subscribe', async (req, res) =>
 {
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to add the topic to the subscriber's list of subscriptions
-    res.status(200).send("Subscribed successfully!")
+   const { subscriberId, topic } = req.body
+   // TODO: Logic to add the topic to the subscriber's list of subscriptions
+   res.status(200).send("Subscribed successfully!")
 })
 
 // Actual implementation for subscription management
@@ -136,16 +136,16 @@ app.post('/unsubscribe', (req, res) => {
 
 app.post('/unsubscribe', async (req, res) =>
 {
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to remove the topic from the subscriber's list of subscriptions
-    res.status(200).send("Unsubscribed successfully!")
+   const { subscriberId, topic } = req.body
+   // TODO: Logic to remove the topic from the subscriber's list of subscriptions
+   res.status(200).send("Unsubscribed successfully!")
 })
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) =>
 {
-    console.error(err.stack)
-    res.status(500).send('Something went wrong!')
+   console.error(err.stack)
+   res.status(500).send('Something went wrong!')
 })
 
 // Middleware for logging request details
@@ -157,8 +157,8 @@ app.use((req, res, next) => {
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) =>
 {
-    console.log('undefined route in broker service')
-    res.status(404).send("Could not find resource!")
+   console.log('undefined route in broker service')
+   res.status(404).send("Could not find resource!")
 })
 
 // Start the server and listen on the specified port
