@@ -3,7 +3,7 @@ const path = require('path')
 require('dotenv').config
    ({
       override: true,
-      path: path.join(__dirname, '../dev.env')
+      path: path.join(__dirname, '../../dev.env')
    })
 
 const client = pgp({
@@ -11,8 +11,6 @@ const client = pgp({
    host: process.env.HOST,
    database: process.env.DB_AUTH,
    password: process.env.PASSWORD_AUTH,
-   //   database: process.env.DATABASE,
-   //   password: process.env.PASSWORD,
    port: process.env.DBPORT
 });
 

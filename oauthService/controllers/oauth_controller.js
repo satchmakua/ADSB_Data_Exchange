@@ -1,37 +1,44 @@
 
 const R = require('ramda')
 
-/* verify auth tokens */
-/* middlewares*/
+/* methods for creating/removing tokens */
 const {
-   genAuthTokens,
    genOAuthCode,
    genAccessToken,
+} = require('../methods/oauth_gen_token.js')
+const {
    removeToken,
    removeAuthCode,
-} = require('../methods/oauth_methods')
+} = require('../methods/oauth_remove_token.js')
 
 const client = require('../database/db.js')
 
 
 
 
-/* Function for handling OAuth login */
-postLogin = async (req, res) =>
+postAuthCode = async (req, res) =>
 {
-   // const body = R.pick(['email', 'password'], req.body) /* or username? */
-   const body = R.pick(['id'], req.body)
-   /* verify access token */
+   /* verify user data */
+   const body = R.pickAll(['username', 'access'], req.body)
+   if (!body.username || !body.access)
+   {
+      res.status(400).json(
+         {
+            code: 400,
+            message: "Missing user value",
+         })
+
+      return
+   }
+
+   /* make access token */
    try 
    {
-      //const user = await findUserByCredentials(client, body.email, body.password)
-      // const token = await genAuthTokens(user, client)
-      // res.header('x-auth', token).send(R.pick(['username'], user))
-      const token = await genAccessToken(body, client) // make refresh token 
-      res.header('x-auth', token).json(
+      const token = await genOAuthCode(body, client)
+      res.header('auth-code', token).json(
          {
             code: 200,
-            message: 'succeeded',
+            message: "success",
          })
    }
    catch (e)
@@ -40,33 +47,69 @@ postLogin = async (req, res) =>
       res.status(400).json(
          {
             code: 400,
-            message: e,
+            message: "Could not generate authentication code",
+         })
+   }
+}
+
+
+postLogin = async (req, res) =>
+{
+   /* verify user data */
+   const body = R.pickAll(["auth_code", "access", "scope"], req.body)//["username", 'scope', 'access'], req.body)
+   if (!body.auth_code || !body.access || !body.scope)//!body.username)
+   {
+      res.status(400).json(
+         {
+            code: 400,
+            message: "Missing user value",
+         })
+
+      return
+   }
+
+   /* make access token */
+   try 
+   {
+      const token = await genAccessToken(body, client)
+      res.header('auth-token', token).json(
+         {
+            code: 200,
+            message: "success",
+         })
+   }
+   catch (e)
+   {
+      console.log(e)
+      res.status(400).json(
+         {
+            code: 400,
+            message: "Could not generate access Token",
          })
    }
 
 }
 
 
-/* Function for handling OAuth logout */
 postLogout = async (req, res) =>
-{ /* DELETE since getting deleting token and access */
-   //const body = R.pick(['username'], req.body)
-   const body = R.pick(['id', 'token'], req.body)
-   //removeToken(body.username, client/*req.token*/).then(
-   removeToken(body, client).then(
-      res.status(200).json(
-         {
-            'code': 200,
-            'message': 'succeeded',
-         })
-   ).catch((e) =>
-   {
-      res.status(400).json(
-         {
-            code: 400,
-            message: e,
-         })
-   })
+{
+   // const body = R.pickAll(['id', 'token'], req.body)
+   // /* need to get token from header */
+   // //removeToken(body.username, client/*req.token*/).then(
+   // removeToken(body, client).then(
+   //    res.status(200).json(
+   //       {
+   //          'code': 200,
+   //     e     'message': 'succeeded',
+   //       })
+   // ).catch((e) =>
+   // {
+   //    res.status(400).json(
+   //       {
+   //          code: 400,
+   //          message: e,
+   //       })
+   // })
 }
 
 
@@ -92,7 +135,6 @@ postCallback = (req, res) =>
 
 
 module.exports = {
-   //postRegister,
    postLogin,
    postRefresh,
    postLogout,
