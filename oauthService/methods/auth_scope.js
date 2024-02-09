@@ -12,4 +12,7 @@ async function verify_scope(s)
    }
 }
 
+
+
+
 module.exports = verify_scope

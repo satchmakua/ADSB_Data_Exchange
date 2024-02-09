@@ -10,6 +10,9 @@ const {
    removeToken,
    removeAuthCode,
 } = require('../methods/oauth_remove_token.js')
+const {
+   verify_user
+} = require('../methods/auth_verify.js')
 
 const client = require('../database/db.js')
 
@@ -124,19 +127,40 @@ postRefresh = (req, res) =>
 }
 
 
-/* Function for handling OAuth callback */
-postCallback = (req, res) =>
+postVerifyToken = async (req, res) =>
 {
-   res.status(200).json({ "oauth": "callback" })
+   // To Do: Retrieve refresh-token
+   const body = {
+      "auth-token": req.get("auth-token")
+   }
+
+   const verification = await verify_user(body, client)
+   if (verification.code === 400)
+   {
+      res.status(400).json(verification)
+      return
+   }
+
+   // To Do: Check verification.code for new tokens generated token 
+   // else  if {}
+   else
+   {
+      // do i need to readd old tokens to header? if so might not need (else if {})
+      res.header('auth-token', body["auth-token"]).json(
+         {
+            code: 200,
+            message: "success",
+         })
+   }
 }
 
 
 
 
-
 module.exports = {
+   postAuthCode,
    postLogin,
    postRefresh,
    postLogout,
-   postCallback,
+   postVerifyToken,
 }
