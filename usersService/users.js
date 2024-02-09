@@ -27,7 +27,7 @@ const bodyParser = require('body-parser')
 // setTimeout(() => {  console.log('World!'); }, 2000);
 // console.log('client: ', client);
 
-const PORT = process.env.PORT || 3001 
+const PORT = process.env.USERS_SRV_PORT || 3001 
 
 const app = express()
 app.use(bodyParser.json())

@@ -11,7 +11,7 @@ require('dotenv').config(
 
 
 
-const PORT = process.env.PORT || 3002
+const PORT = process.env.AUTH_SRV_PORT || 3002
 
 
 const app = express()

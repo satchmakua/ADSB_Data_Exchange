@@ -24,12 +24,13 @@ function logDbConnectionDetails(db) {
 }
 
 // Define user service and oauth service urls for proxy service
-let user = 'http://localhost:3001'
-let auth = 'http://localhost:3002'
+// This definition should eventually be moved to dev.env or appsettings
+let auth = 'http://localhost:' +  process.env.AUTH_SRV_PORT 
+let user = 'http://localhost:' + process.env.USERS_SRV_PORT 
 
 // Define the server's port number and database connection URI
-const PORT = process.env.PORT || 3000
-const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database'
+const PORT = process.env.BROKER_SRV_PORT || 3000
+//const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database'
 // const db = pgp(DB_URI)
 // logDbConnectionDetails(db)
 
@@ -175,7 +176,7 @@ db.connect()
       console.log('ERROR:', error.message || error)
   })
 
-console.log(`Database URI: ${DB_URI}`)
+//console.log(`Database URI: ${DB_URI}`)
 
 // Gracefully shut down on SIGINT (Ctrl-C)
 process.on('SIGINT', function () {
