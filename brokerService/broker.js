@@ -10,11 +10,11 @@ const cors = require('cors') // Cross-Origin Resource Sharing middleware
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
 
-const path = require('path');
+const path = require('path')
 require('dotenv').config({
    override: true,
    path: path.join(__dirname, '../dev.env')
-});
+})
 
 // Function to help troubleshoot db connection issues
 function logDbConnectionDetails(db) {
@@ -35,7 +35,7 @@ let auth = 'http://localhost:3002'
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000
 const DB_URI = process.env.DB_URI || `postgresql://${process.env.ADSDB_USER}:${process.env.ADSDB_PASSWORD}\
-@${process.env.ADSDB_HOST}:${process.env.ADSDB_PORT}/${process.env.ADSDB_DB}`;
+@${process.env.ADSDB_HOST}:${process.env.ADSDB_PORT}/${process.env.ADSDB_DB}`
 
 const db = pgp(DB_URI)
 logDbConnectionDetails(db)
@@ -74,12 +74,12 @@ wss.on('connection', function connection(ws) {
 // // Middleware to authenticate WebSocket connections
 // wss.on('connection', (ws, req) => {
 //     // Placeholder for authentication check, e.g., via token in query params
-//     const token = req.url.split('token=')[1]; // Simplified example
+//     const token = req.url.split('token=')[1] // Simplified example
 //     if (!token || token !== 'expectedToken') {
-//         ws.terminate(); // Close connection if not authenticated
-//         console.log('WebSocket connection closed due to failed authentication');
+//         ws.terminate() // Close connection if not authenticated
+//         console.log('WebSocket connection closed due to failed authentication')
 //     }
-// });
+// })
 
 // Forward API call to the appropriate service
 app.all("/users/*", proxy(user))
@@ -118,28 +118,28 @@ app.post('/subscribe', async (req, res) =>
 })
 
 // Actual implementation for subscription management
-const subscriptions = {}; // Simplified example to keep track of subscriptions
+const subscriptions = {} // Simplified example to keep track of subscriptions
 
 app.post('/subscribe', (req, res) => {
-    const { subscriberId, topic } = req.body;
+    const { subscriberId, topic } = req.body
     if (!subscriptions[subscriberId]) {
-        subscriptions[subscriberId] = new Set();
+        subscriptions[subscriberId] = new Set()
     }
-    subscriptions[subscriberId].add(topic);
-    console.log(`Subscriber ${subscriberId} added to topic ${topic}`);
-    res.status(200).json({ message: `Subscribed to topic ${topic}` });
-});
+    subscriptions[subscriberId].add(topic)
+    console.log(`Subscriber ${subscriberId} added to topic ${topic}`)
+    res.status(200).json({ message: `Subscribed to topic ${topic}` })
+})
 
 app.post('/unsubscribe', (req, res) => {
-    const { subscriberId, topic } = req.body;
+    const { subscriberId, topic } = req.body
     if (subscriptions[subscriberId] && subscriptions[subscriberId].has(topic)) {
-        subscriptions[subscriberId].delete(topic);
-        console.log(`Subscriber ${subscriberId} removed from topic ${topic}`);
-        res.status(200).json({ message: `Unsubscribed from topic ${topic}` });
+        subscriptions[subscriberId].delete(topic)
+        console.log(`Subscriber ${subscriberId} removed from topic ${topic}`)
+        res.status(200).json({ message: `Unsubscribed from topic ${topic}` })
     } else {
-        res.status(404).json({ message: `Subscription not found for topic ${topic}` });
+        res.status(404).json({ message: `Subscription not found for topic ${topic}` })
     }
-});
+})
 
 app.post('/unsubscribe', async (req, res) =>
 {
@@ -157,9 +157,9 @@ app.use((err, req, res, next) =>
 
 // Middleware for logging request details
 app.use((req, res, next) => {
-    console.log(`Received ${req.method} request for ${req.url} from ${req.ip}`);
-    next();
-});
+    console.log(`Received ${req.method} request for ${req.url} from ${req.ip}`)
+    next()
+})
 
 // 404 catch-all handler for handling undefined routes
 app.use((req, res, next) =>
@@ -193,19 +193,19 @@ process.on('SIGINT', function () {
 
 // Clean shutdown logic for WebSocket server
 const shutdown = () => {
-    console.log('Shutting down server...');
+    console.log('Shutting down server...')
     server.close(() => {
-        console.log('HTTP server closed.');
+        console.log('HTTP server closed.')
         wss.close(() => {
-            console.log('WebSocket server closed.');
+            console.log('WebSocket server closed.')
             pgp.end().then(() => {
-                console.log('Database connections closed.');
-                process.exit(0);
-            });
-        });
-    });
-};
+                console.log('Database connections closed.')
+                process.exit(0)
+            })
+        })
+    })
+}
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown)
+process.on('SIGINT', shutdown)
 
