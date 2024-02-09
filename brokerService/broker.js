@@ -10,6 +10,11 @@ const cors = require('cors') // Cross-Origin Resource Sharing middleware
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
 
+const path = require('path');
+require('dotenv').config({
+   override: true,
+   path: path.join(__dirname, '../dev.env')
+});
 
 // Function to help troubleshoot db connection issues
 function logDbConnectionDetails(db) {
@@ -29,7 +34,9 @@ let auth = 'http://localhost:3002'
 
 // Define the server's port number and database connection URI
 const PORT = process.env.PORT || 3000
-const DB_URI = process.env.DB_URI || 'postgresql://postgres:sagetech123@localhost:5432/database'
+const DB_URI = process.env.DB_URI || `postgresql://${process.env.ADSDB_USER}:${process.env.ADSDB_PASSWORD}\
+@${process.env.ADSDB_HOST}:${process.env.ADSDB_PORT}/${process.env.ADSDB_DB}`;
+
 const db = pgp(DB_URI)
 logDbConnectionDetails(db)
 

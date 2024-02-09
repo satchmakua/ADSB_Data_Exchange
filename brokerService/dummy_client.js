@@ -1,14 +1,22 @@
 const pgp = require('pg-promise')();
 const readline = require('readline');
+const path = require('path')
+
+require('dotenv').config
+   ({
+      override: true,
+      path: path.join(__dirname, '../dev.env')
+   })
 
 // Configurable database connection settings
 const dbConfig = {
-    host: 'localhost',
-    port: 5432,
-    database: 'database',
-    user: 'postgres',
-    password: 'sagetech123'
+    host: process.env.ADSDB_HOST,
+    port: parseInt(process.env.ADSDB_PORT, 10),
+    database: process.env.ADSDB_DB,
+    user: process.env.ADSDB_USER,
+    password: process.env.ADSDB_PASSWORD
 };
+
 const db = pgp(dbConfig);
 
 // Interactive CLI for user input
