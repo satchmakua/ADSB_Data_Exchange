@@ -7,23 +7,28 @@ const http = require('http')
 const bodyParser = require('body-parser') // Middleware for parsing HTTP request bodies
 const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
+const { Readable, Writable } = require('stream') // Needed for message queues
 
 const WebSocket = require('ws') // WebSocket setup for ADS-B
+const groundStationSockets = new Map()
 
 const path = require('path')
 require('dotenv').config({
-   override: true,
-   path: path.join(__dirname, '../dev.env')
+    override: true,
+    path: path.join(__dirname, '../dev.env')
 })
 
 // Function to help troubleshoot db connection issues
-function logDbConnectionDetails(db) {
+function logDbConnectionDetails(db)
+{
     db.connect()
-        .then(obj => {
+        .then(obj =>
+        {
             console.log('Connected to the database:', db.$config.options)
             obj.done() // release the connection
         })
-        .catch(error => {
+        .catch(error =>
+        {
             console.error('Error connecting to the database:', error)
         })
 }
@@ -52,20 +57,53 @@ app.use(cors())
 app.use(cors())
 app.use(bodyParser.json())
 
-// Establish a connection to the PostgreSQL database
 
+const adminQueue = new Readable(
+    {
+        objectMode: true,
+        read() { } // The broker shouldn't ever have to read from queue
+    }
+)
+/*
+// TO DO: Need a writable stream that the client socket will be listening to, the queue will then be piped to that stream.
+          The json objects in the queue will need to be stringified before being sent.
+adminQueue.pipe()
+*/
+
+// TO DO: Is this structure going to allow us to disambiguate between ground station sockets and client sockets
 // Handle WebSocket connections
-wss.on('connection', function connection(ws) {
-    ws.on('message', function incoming(message) {
+wss.on('connection', function connection(ws)
+{
+    let stationID = 0
+
+    ws.on('init', (id) => 
+    {
+        console.log("Socket init signal received")
+        groundStationSockets.set(id, ws)
+        stationID = id
+    })
+
+    ws.on('close', () =>
+    {
+        console.log("Socket closed signal")
+        groundStationSockets.delete(stationID)
+    })
+
+    ws.on('message', function incoming(message) 
+    {
         let data = JSON.parse(message)
         console.log('Received message:', data)
 
+        adminQueue.push(data)
+
         // Inserting messages into the database
         db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
-            .then(() => {
+            .then(() =>
+            {
                 console.log('Message successfully inserted into database')
             })
-            .catch(err => {
+            .catch(err =>
+            {
                 console.error('Error inserting message into database:', err)
             })
     })
@@ -92,18 +130,24 @@ app.get('/groundstation/websocket', (req, res) =>
 
 
 // Handle WebSocket upgrade requests
-app.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
+app.on('upgrade', (request, socket, head) =>
+{
+    wss.handleUpgrade(request, socket, head, (ws) =>
+    {
+        groundStationSockets.set(request.groundStationID, socket)
         wss.emit('connection', ws, request)
     })
 })
 
 // GET route to fetch messages from the database
-app.get('/message', async (req, res) => {
-    try {
+app.get('/message', async (req, res) =>
+{
+    try
+    {
         const messages = await db.any('SELECT * FROM adsb_messages')
         res.status(200).json(messages)
-    } catch (err) {
+    } catch (err)
+    {
         res.status(500).send("Error fetching messages: " + err)
     }
 
@@ -120,9 +164,11 @@ app.post('/subscribe', async (req, res) =>
 // Actual implementation for subscription management
 const subscriptions = {} // Simplified example to keep track of subscriptions
 
-app.post('/subscribe', (req, res) => {
+app.post('/subscribe', (req, res) =>
+{
     const { subscriberId, topic } = req.body
-    if (!subscriptions[subscriberId]) {
+    if (!subscriptions[subscriberId])
+    {
         subscriptions[subscriberId] = new Set()
     }
     subscriptions[subscriberId].add(topic)
@@ -130,13 +176,16 @@ app.post('/subscribe', (req, res) => {
     res.status(200).json({ message: `Subscribed to topic ${topic}` })
 })
 
-app.post('/unsubscribe', (req, res) => {
+app.post('/unsubscribe', (req, res) =>
+{
     const { subscriberId, topic } = req.body
-    if (subscriptions[subscriberId] && subscriptions[subscriberId].has(topic)) {
+    if (subscriptions[subscriberId] && subscriptions[subscriberId].has(topic))
+    {
         subscriptions[subscriberId].delete(topic)
         console.log(`Subscriber ${subscriberId} removed from topic ${topic}`)
         res.status(200).json({ message: `Unsubscribed from topic ${topic}` })
-    } else {
+    } else
+    {
         res.status(404).json({ message: `Subscription not found for topic ${topic}` })
     }
 })
@@ -156,7 +205,8 @@ app.use((err, req, res, next) =>
 })
 
 // Middleware for logging request details
-app.use((req, res, next) => {
+app.use((req, res, next) =>
+{
     console.log(`Received ${req.method} request for ${req.url} from ${req.ip}`)
     next()
 })
@@ -169,36 +219,44 @@ app.use((req, res, next) =>
 })
 
 // Start the server and listen on the specified port
-server.listen(PORT, () => {
+server.listen(PORT, () =>
+{
     console.log(`Broker service running on port ${PORT}`)
 })
 
 db.connect()
-  .then(obj => {
-      console.log('Connected to the database')
-      obj.done() // success, release the connection
-  })
-  .catch(error => {
-      console.log('ERROR:', error.message || error)
-  })
+    .then(obj =>
+    {
+        console.log('Connected to the database')
+        obj.done() // success, release the connection
+    })
+    .catch(error =>
+    {
+        console.log('ERROR:', error.message || error)
+    })
 
 console.log(`Database URI: ${DB_URI}`)
 
 // Gracefully shut down on SIGINT (Ctrl-C)
-process.on('SIGINT', function () {
+process.on('SIGINT', function ()
+{
     console.log("\nGracefully shutting down from SIGINT (Ctrl-C)")
     pgp.end()  // Close the database connection
     process.exit(0)
 })
 
 // Clean shutdown logic for WebSocket server
-const shutdown = () => {
+const shutdown = () =>
+{
     console.log('Shutting down server...')
-    server.close(() => {
+    server.close(() =>
+    {
         console.log('HTTP server closed.')
-        wss.close(() => {
+        wss.close(() =>
+        {
             console.log('WebSocket server closed.')
-            pgp.end().then(() => {
+            pgp.end().then(() =>
+            {
                 console.log('Database connections closed.')
                 process.exit(0)
             })
