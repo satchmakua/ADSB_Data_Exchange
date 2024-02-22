@@ -43,7 +43,7 @@ postUsers = (req, res) =>
    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
    const query = {
-      text: 'INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *',
+      text: "INSERT INTO users (username, password, salt) VALUES ('$1', '$2', '$3') RETURNING *",
       values: [username, hash, salt]
   };
 
