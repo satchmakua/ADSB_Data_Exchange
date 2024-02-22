@@ -71,7 +71,12 @@ isValidUser = (req, res) =>
       return
    }
 
-   client.query(`SELECT salt from users WHERE username='${username}'`, (error, results) =>
+   const saltQuery = {
+      text: "SELECT salt from users WHERE username='$1'",
+      values: [username]
+   }
+
+   client.query(saltQuery, (error, results) =>
    {
       if (error)
       {
@@ -84,7 +89,7 @@ isValidUser = (req, res) =>
    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
    const query = {
-      text: 'SELECT id FROM users WHERE username=$1 AND password=$2',
+      text: "SELECT id FROM users WHERE username='$1' AND password='$2'",
       values: [username, hash]
    }
 
@@ -125,7 +130,11 @@ getUsers = (req, res) =>
 getID = (req, res) =>
 {
    const id = parseInt(req.params.id)
-   client.query(`SELECT * FROM users WHERE id = ${id}`, (error, results) => standardReturn(res, error, results))
+   const query = {
+      text: 'SELECT * FROM users WHERE id = $1',
+      values: [id]
+   }
+   client.query(query, (error, results) => standardReturn(res, error, results))
 }
 
 // delete '/users/:id'
@@ -157,15 +166,15 @@ putID = (req, res) =>
 
    const queries = [
       {
-         text: 'UPDATE users SET username=$2, password=$3, salt=$4 WHERE id = $1',
+         text: "UPDATE users SET username='$2', password='$3', salt='$4' WHERE id = $1",
          values: [id, username, hash, salt]
       },
       {
-         text: 'UPDATE users SET username=$2 WHERE id = $1',
+         text: "UPDATE users SET username='$2' WHERE id = $1",
          values: [id, username]
       },
       {
-         text: 'UPDATE users SET password=$2, salt=$3 WHERE id = $1',
+         text: "UPDATE users SET password='$2', salt='$3' WHERE id = $1",
          values: [id, hash, salt]
       }
    ]
@@ -190,7 +199,7 @@ postDevices = (req, res) =>
    const { mac_address, latitude, longitude } = req.body;
    // should get mac_address / identifier from somewhere else???
    const query = {
-      text: 'INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES ($1, "$2", $3, $4) RETURNING *',
+      text: "INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES ($1, '$2', $3, $4) RETURNING *",
       values: [id, mac_address, latitude, longitude]
    }
    client.query(query, (error, results) =>

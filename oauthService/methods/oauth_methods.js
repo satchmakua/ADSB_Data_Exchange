@@ -23,9 +23,14 @@ async function genAuthTokens(user, client)
          access
       },
       process.env.JWT_SECRET).toString()
+
+   const query = {
+      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('$1', '$2', 'NOT IMPLEMENTED YET')",
+      values: [id, token]
+   }
       
    //await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user.username}';`)
-   await client.query(`INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('${id}', '${token}', 'NOT IMPLEMENTED YET')`)
+   await client.query(query)
    await client.query('COMMIT')
    /* need to return time created */
    return token
@@ -46,7 +51,7 @@ async function genOAuthCode(user, client /* will need to add param for project *
       process.env.JWT_SECRET).toString()
 
    const query = {
-      text: 'INSERT INTO oauth (userId, authCode) VALUES ("$1", "$2")',
+      text: "INSERT INTO oauth (userId, authCode) VALUES ('$1', '$2')",
       values: [id, token]
    }
    //await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user}';`)
