@@ -25,7 +25,7 @@ async function genAuthTokens(user, client)
       process.env.JWT_SECRET).toString()
 
    const query = {
-      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('$1', '$2', 'NOT IMPLEMENTED YET')",
+      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ($1, $2, 'NOT IMPLEMENTED YET')",
       values: [id, token]
    }
       
@@ -51,7 +51,7 @@ async function genOAuthCode(user, client /* will need to add param for project *
       process.env.JWT_SECRET).toString()
 
    const query = {
-      text: "INSERT INTO oauth (userId, authCode) VALUES ('$1', '$2')",
+      text: "INSERT INTO oauth (userId, authCode) VALUES ($1, $2)",
       values: [id, token]
    }
    //await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user}';`)
@@ -87,7 +87,7 @@ async function genAccessToken(user, client /* will need to add param for project
    ).toString()
 
    const query = {
-      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('$1', '$2', 'NOT IMPLEMENTED YET')",
+      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ($1, $2, 'NOT IMPLEMENTED YET')",
       values: [id, token]
    }
 
@@ -105,7 +105,7 @@ async function removeToken(user, client)
    try
    {
       const query = {
-         text: "DELETE FROM auth WHERE userId='$1' AND accessToken='$2';",
+         text: "DELETE FROM auth WHERE userId=$1 AND accessToken=$2",
          values: [user.id, user.token]
       }
       await client.query(query)
@@ -128,7 +128,7 @@ async function removeAuthCode(user, client)
 {
    /* set up a notification if failed */
    const query = {
-      text: "DELETE FROM oauth WHERE userId='$1' AND authCode='$2';",
+      text: "DELETE FROM oauth WHERE userId=$1 AND authCode=$2",
       values: [user.id, user.token]
    }
    await client.query(query)
