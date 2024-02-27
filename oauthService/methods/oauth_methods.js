@@ -24,8 +24,13 @@ async function genAuthTokens(user, client)
       },
       process.env.JWT_SECRET).toString()
 
+   const query = {
+      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ($1, $2, 'NOT IMPLEMENTED YET')",
+      values: [id, token]
+   }
+      
    //await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user.username}';`)
-   await client.query(`INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('${id}', '${token}', 'NOT IMPLEMENTED YET')`)
+   await client.query(query)
    await client.query('COMMIT')
    /* need to return time created */
    return token
@@ -45,8 +50,12 @@ async function genOAuthCode(user, client /* will need to add param for project *
       },
       process.env.JWT_SECRET).toString()
 
+   const query = {
+      text: "INSERT INTO oauth (userId, authCode) VALUES ($1, $2)",
+      values: [id, token]
+   }
    //await client.query(`UPDATE users SET access='${access}', token='${token}' WHERE username='${user}';`)
-   await client.query(`INSERT INTO oauth (userId, authCode) VALUES ('${id}', '${token}')`)
+   await client.query(query)
    await client.query('COMMIT')
    return token
 }
@@ -77,7 +86,12 @@ async function genAccessToken(user, client /* will need to add param for project
       options
    ).toString()
 
-   await client.query(`INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('${id}', '${token}', 'NOT IMPLEMENTED YET')`)
+   const query = {
+      text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ($1, $2, 'NOT IMPLEMENTED YET')",
+      values: [id, token]
+   }
+
+   await client.query(query)
    await client.query('COMMIT')
    /* need to return time created */
    return token
@@ -90,7 +104,11 @@ async function removeToken(user, client)
    //await client.query(`UPDATE users SET token='', access='' WHERE username='${user}';`)
    try
    {
-      await client.query(`DELETE FROM auth WHERE userId='${user.id}' AND accessToken='${user.token}';`)
+      const query = {
+         text: "DELETE FROM auth WHERE userId=$1 AND accessToken=$2",
+         values: [user.id, user.token]
+      }
+      await client.query(query)
       await client.query('COMMIT')
       return {
          'code': 200,
@@ -109,8 +127,11 @@ async function removeToken(user, client)
 async function removeAuthCode(user, client)
 {
    /* set up a notification if failed */
-
-   await client.query(`DELETE FROM oauth WHERE userId='${user.id}' AND authCode='${user.token}';`)
+   const query = {
+      text: "DELETE FROM oauth WHERE userId=$1 AND authCode=$2",
+      values: [user.id, user.token]
+   }
+   await client.query(query)
    return await client.query('COMMIT') /* might have to modify route so it is always successful */
 }
 
