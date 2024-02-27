@@ -5,14 +5,14 @@ const jwt = require("jsonwebtoken")
 
 
 // generate secret password: require('crypto').randomBytes(64).toString('hex')
-async function verify_user(user, client)
+async function verify_token(user, client)
 {
    /*  To Do: Check if user undefined */
 
    // To Do: Check for access token and if it can be decrypted
    try
    {
-      const payload = jwt.verify(user["auth-token"], process.env.JWT_SECRET)
+      const payload = jwt.verify(user["auth-token"], process.env.JWT_SECRET2)
 
       console.log("Success: access token verified. Payload: ", payload)
 
@@ -22,7 +22,7 @@ async function verify_user(user, client)
       // otherwise throw error
       try
       {
-         const payload = jwt.verify(user["refresh-token"], process.env.JWT_SECRET)
+         const payload = jwt.verify(user["refresh-token"], process.env.JWT_SECRET3)
          console.log("Success: refresh token verified. Payload: ", payload)
       } catch (e2)
       {
@@ -46,4 +46,4 @@ async function verify_user(user, client)
 
 
 
-module.exports = { verify_user }
+module.exports = { verify_token }

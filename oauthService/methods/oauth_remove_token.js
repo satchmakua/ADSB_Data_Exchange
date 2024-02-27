@@ -8,8 +8,13 @@ async function removeToken(user, client)
    /* set up a notification if failed */
    try
    {
-      await client.query(`DELETE FROM auth WHERE userId='${user.id}' AND accessToken='${user.token}';`)
+      const query = {
+         text: "DELETE FROM auth WHERE userId=$1 AND accessToken=$2",
+         values: [user.id, user.token]
+      }
+      await client.query(query)
       await client.query('COMMIT')
+
       return {
          'code': 200,
          'message': 'Successfully deleted token'
@@ -28,8 +33,15 @@ async function removeAuthCode(user, client)
 {
    /* set up a notification if failed */
 
-   await client.query(`DELETE FROM oauth WHERE userId='${user.id}' AND authCode='${user.token}';`)
+   // await client.query(`DELETE FROM oauth WHERE userId='${user.id}' AND authCode='${user.token}';`)
+   // return await client.query('COMMIT') /* might have to modify route so it is always successful */
+   const query = {
+      text: "DELETE FROM oauth WHERE userId=$1 AND authCode=$2",
+      values: [user.id, user.token]
+   }
+   await client.query(query)
    return await client.query('COMMIT') /* might have to modify route so it is always successful */
+
 }
 
 

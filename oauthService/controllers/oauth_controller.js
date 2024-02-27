@@ -11,7 +11,7 @@ const {
    removeAuthCode,
 } = require('../methods/oauth_remove_token.js')
 const {
-   verify_user
+   verify_token
 } = require('../methods/auth_verify.js')
 
 const client = require('../database/db.js')
@@ -134,7 +134,7 @@ postVerifyToken = async (req, res) =>
       "auth-token": req.get("auth-token")
    }
 
-   const verification = await verify_user(body, client)
+   const verification = await verify_token(body, client)
    if (verification.code === 400)
    {
       res.status(400).json(verification)

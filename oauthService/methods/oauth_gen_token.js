@@ -25,8 +25,14 @@ async function genOAuthCode(user, client /* will need to add param for project *
       process.env.JWT_SECRET,
       options).toString()
 
-   // await client.query(`INSERT INTO oauth (userId, authCode) VALUES ('${id}', '${token}')`)
-   // await client.query('COMMIT')
+   const query = {
+      text: "INSERT INTO oauth (userId, authCode) VALUES ($1, $2)",
+      values: [id, token]
+   }
+
+   await client.query(query)
+   await client.query('COMMIT')
+
    return token
 }
 
@@ -42,7 +48,7 @@ async function genAccessToken(user, client)
    /* will have to move in the future */
    try
    {
-      const body = jwt.verify(user.auth_code, process.env.JWT_SECRET)
+      const body = jwt.verify(user.auth_code, process.env.JWT_SECRET) // will need to move bc it does not fit this function
 
       const payload =
       {
@@ -55,18 +61,34 @@ async function genAccessToken(user, client)
       }
       const token = jwt.sign(
          payload,
-         process.env.JWT_SECRET,
+         process.env.JWT_SECRET2,
          options
       ).toString()
 
-      //await client.query(`INSERT INTO auth (userId, accessToken, refreshToken) VALUES ('${id}', '${token}', 'NOT IMPLEMENTED YET')`)
-      //await client.query('COMMIT')
+      const query = {
+         text: "INSERT INTO auth (userId, accessToken, refreshToken) VALUES ($1, $2, 'NOT IMPLEMENTED YET')",
+         values: [id, token]
+      }
+
+      await client.query(query)
+      await client.query('COMMIT')
 
       return token
    } catch (e)
    {
       return e
    }
+}
+
+
+async function genRefreshToken(user, client)
+{
+   if (!user)
+   {
+      return undefined
+   }
+
+   return "7"
 }
 
 
