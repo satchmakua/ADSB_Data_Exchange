@@ -1,12 +1,13 @@
+
 const pgp = require('pg-promise')()
 const readline = require('readline')
 const path = require('path')
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
-require('dotenv').config
-   ({
-      override: true,
-      path: path.join(__dirname, '../dev.env')
-   })
+require('dotenv').config({
+    override: true,
+    path: path.join(__dirname, '../dev.env')
+})
 
 // Configurable database connection settings
 const dbConfig = {
@@ -58,30 +59,42 @@ function queryMessagesByTime() {
     })
 }
 
-// E.g.
-// When prompted for the start time:
-
-// User Input: Enter start time (YYYY-MM-DD HH:MM:SS):
-// Example Response: 2023-01-01 12:00:00
-
-// When prompted for the end time:
-
-// User Input: Enter end time (YYYY-MM-DD HH:MM:SS):
-// Example Response: 2023-01-02 12:00:00
-
-// Enhanced test query to check database connection and interactive message fetching
-db.one('SELECT NOW()')
-    .then(result => {
-        console.log('Database connection test:', result)
-        queryMessagesByTime()
+async function interactWithBroker() {
+    rl.question('Enter action (fetchLatest/fetchByTime/proxyUser): ', async (action) => {
+        switch (action) {
+            case 'fetchLatest':
+                await fetchLatestAdsbMessages()
+                break
+            case 'fetchByTime':
+                break
+            case 'proxyUser':
+                rl.question('Enter user service path: ', async (path) => {
+                    const response = await proxyToUserService(path)
+                    console.log('User Service Response:', response)
+                })
+                break
+            default:
+                console.log('Invalid action.')
+        }
+        rl.close()
     })
-    .catch(error => {
-        console.error('Database connection test error:', error)
-    })
+}
 
-// Correcting graceful shutdown and database disconnection
+async function proxyToUserService(path) {
+    const url = `http://localhost:3001${path}`
+    const response = await fetch(url)
+    return response.json()
+}
+
+// Main interaction entry point
+interactWithBroker()
+
+db.one('SELECT NOW()').then(result => {
+    console.log('Database connection test:', result)
+}).catch(error => {
+    console.error('Database connection test error:', error)
+})
+
 process.on('exit', () => {
     console.log('Database connection closed.')
 })
-
-
