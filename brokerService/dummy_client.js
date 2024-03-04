@@ -63,39 +63,38 @@ async function interactWithBroker() {
     rl.question('Enter action (fetchLatest/fetchByTime/proxyUser): ', async (action) => {
         switch (action) {
             case 'fetchLatest':
-                await fetchLatestAdsbMessages();
-                break;
+                await fetchLatestAdsbMessages()
+                break
             case 'fetchByTime':
-                // Assume implementation prompts for start/end time and calls fetchAdsbMessagesByTime
-                break;
+                break
             case 'proxyUser':
                 rl.question('Enter user service path: ', async (path) => {
-                    const response = await proxyToUserService(path);
-                    console.log('User Service Response:', response);
-                });
-                break;
+                    const response = await proxyToUserService(path)
+                    console.log('User Service Response:', response)
+                })
+                break
             default:
-                console.log('Invalid action.');
+                console.log('Invalid action.')
         }
-        rl.close();
-    });
+        rl.close()
+    })
 }
 
 async function proxyToUserService(path) {
-    const url = `http://localhost:3001${path}`;
-    const response = await fetch(url);
-    return response.json();
+    const url = `http://localhost:3001${path}`
+    const response = await fetch(url)
+    return response.json()
 }
 
 // Main interaction entry point
-interactWithBroker();
+interactWithBroker()
 
 db.one('SELECT NOW()').then(result => {
-    console.log('Database connection test:', result);
+    console.log('Database connection test:', result)
 }).catch(error => {
-    console.error('Database connection test error:', error);
-});
+    console.error('Database connection test error:', error)
+})
 
 process.on('exit', () => {
-    console.log('Database connection closed.');
-});
+    console.log('Database connection closed.')
+})
