@@ -59,33 +59,43 @@ function queryMessagesByTime() {
     })
 }
 
-// Function to proxy requests to user service
+async function interactWithBroker() {
+    rl.question('Enter action (fetchLatest/fetchByTime/proxyUser): ', async (action) => {
+        switch (action) {
+            case 'fetchLatest':
+                await fetchLatestAdsbMessages();
+                break;
+            case 'fetchByTime':
+                // Assume implementation prompts for start/end time and calls fetchAdsbMessagesByTime
+                break;
+            case 'proxyUser':
+                rl.question('Enter user service path: ', async (path) => {
+                    const response = await proxyToUserService(path);
+                    console.log('User Service Response:', response);
+                });
+                break;
+            default:
+                console.log('Invalid action.');
+        }
+        rl.close();
+    });
+}
+
 async function proxyToUserService(path) {
-    const url = `http://localhost:3001${path}`
-    const response = await fetch(url)
-    return response.json()
+    const url = `http://localhost:3001${path}`;
+    const response = await fetch(url);
+    return response.json();
 }
 
-// Function to proxy requests to auth service
-async function proxyToAuthService(path) {
-    const url = `http://localhost:3002${path}`
-    const response = await fetch(url)
-    return response.json()
-}
+// Main interaction entry point
+interactWithBroker();
 
-// Enhanced test query to check database connection and interactive message fetching
-db.one('SELECT NOW()')
-    .then(result => {
-        console.log('Database connection test:', result)
-        queryMessagesByTime()
-    })
-    .catch(error => {
-        console.error('Database connection test error:', error)
-    })
+db.one('SELECT NOW()').then(result => {
+    console.log('Database connection test:', result);
+}).catch(error => {
+    console.error('Database connection test error:', error);
+});
 
-// Correcting graceful shutdown and database disconnection
 process.on('exit', () => {
-    console.log('Database connection closed.')
-})
-
-
+    console.log('Database connection closed.');
+});
