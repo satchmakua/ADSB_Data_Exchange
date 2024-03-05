@@ -4,7 +4,6 @@ const router = express.Router()
 const {
    postAuthCode,
    postLogin,
-   postLogout,
    postRefresh,
    postVerifyToken,
 } = require('../controllers/oauth_controller')
@@ -20,7 +19,6 @@ const {
 router.post('/auth/auth_code', postAuthCode)
 router.post('/auth/login', postLogin)
 /* require search function */
-router.post('/auth/logout', postLogout)
 router.post('/auth/refresh', postRefresh)
 router.post('/auth/verify', postVerifyToken)
 

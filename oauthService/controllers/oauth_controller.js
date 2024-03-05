@@ -5,6 +5,7 @@ const R = require('ramda')
 const {
    genOAuthCode,
    genAccessToken,
+   genRefreshToken,
 } = require('../methods/oauth_gen_token.js')
 const {
    removeToken,
@@ -21,24 +22,13 @@ const client = require('../database/db.js')
 
 postAuthCode = async (req, res) =>
 {
-   /* verify user data */
-   const body = R.pickAll(['username', 'access'], req.body)
-   if (!body.username || !body.access)
-   {
-      res.status(400).json(
-         {
-            code: 400,
-            message: "Missing user value",
-         })
-
-      return
-   }
-
-   /* make access token */
    try 
    {
+      const body = R.pickAll(['username', 'access'], req.body)
+      if (!body.username || !body.access) throw "Error: Header is missing user data!"
+
       const token = await genOAuthCode(body, client)
-      res.header('auth-code', token).json(
+      res.header("auth_code", token).json(
          {
             code: 200,
             message: "success",
@@ -46,11 +36,10 @@ postAuthCode = async (req, res) =>
    }
    catch (e)
    {
-      console.log(e)
       res.status(400).json(
          {
             code: 400,
-            message: "Could not generate authentication code",
+            message: e,
          })
    }
 }
@@ -58,72 +47,72 @@ postAuthCode = async (req, res) =>
 
 postLogin = async (req, res) =>
 {
-   /* verify user data */
-   const body = R.pickAll(["auth_code", "access", "scope"], req.body)//["username", 'scope', 'access'], req.body)
-   if (!body.auth_code || !body.access || !body.scope)//!body.username)
-   {
-      res.status(400).json(
-         {
-            code: 400,
-            message: "Missing user value",
-         })
-
-      return
-   }
-
-   /* make access token */
    try 
    {
-      const token = await genAccessToken(body, client)
-      res.header('auth-token', token).json(
+      const body = R.pickAll(["auth_code", "access", "scope"], req.body)
+      if (!body.auth_code) throw "Error: auth_code was not found!";
+      if (!body.access || !body.scope) throw "Error: Header is missing user data!"
+
+      const token =
+         [
+            await genAccessToken(body, client),
+            await genRefreshToken(body, client)
+         ]
+
+      res.status(200).set(
          {
-            code: 200,
-            message: "success",
-         })
+            access_token: token[0],
+            refresh_token: token[1],
+         }).json(
+            {
+               code: 200,
+               message: "success",
+            })
    }
    catch (e)
    {
-      console.log(e)
       res.status(400).json(
          {
             code: 400,
-            message: "Could not generate access Token",
+            message: e,
          })
    }
-
 }
 
-
-postLogout = async (req, res) =>
-{
-   // const body = R.pickAll(['id', 'token'], req.body)
-   // /* need to get token from header */
-   // //removeToken(body.username, client/*req.token*/).then(
-   // removeToken(body, client).then(
-   //    res.status(200).json(
-   //       {
-   //          'code': 200,
-   //     e     'message': 'succeeded',
-   //       })
-   // ).catch((e) =>
-   // {
-   //    res.status(400).json(
-   //       {
-   //          code: 400,
-   //          message: e,
-   //       })
-   // })
-}
 
 
 /* Function for refreshing OAuth tokens */
-postRefresh = (req, res) =>
+postRefresh = async (req, res) =>
 {
-   // get id and refresh token 
-   /* delete old token */
-   /* create new access and refresh token */
-   /* return access, refresh, and time created */
-   res.status(200).json({ "oauth": "token refreshed" })
+   try 
+   {
+      const body = R.pickAll(["username", "access", "scope"], req.body)
+      if (!body.username) throw "Error: username was not provided!"
+      if (!body.access || !body.scope) throw "Error: access or scope is missing!"
+
+      const token =
+         [
+            await genAccessToken(body, client),
+            await genRefreshToken(body, client)
+         ]
+
+      res.status(200).set(
+         {
+            access_token: token[0],
+            refresh_token: token[1],
+         }).json(
+            {
+               code: 200,
+               message: "tokens refreshed"
+            })
+   } catch (e)
+   {
+      res.status(400).json(
+         {
+            code: 400,
+            message: e
+         })
+   }
 }
 
 
@@ -131,7 +120,7 @@ postVerifyToken = async (req, res) =>
 {
    // To Do: Retrieve refresh-token
    const body = {
-      "auth-token": req.get("auth-token")
+      "auth_token": req.get("auth_token")
    }
 
    const verification = await verify_token(body, client)
@@ -146,7 +135,7 @@ postVerifyToken = async (req, res) =>
    else
    {
       // do i need to readd old tokens to header? if so might not need (else if {})
-      res.header('auth-token', body["auth-token"]).json(
+      res.header('auth_token', body["auth_token"]).json(
          {
             code: 200,
             message: "success",
@@ -161,6 +150,5 @@ module.exports = {
    postAuthCode,
    postLogin,
    postRefresh,
-   postLogout,
    postVerifyToken,
 }
