@@ -7,10 +7,10 @@ const {
    genAccessToken,
    genRefreshToken,
 } = require('../methods/oauth_gen_token.js')
-const {
-   removeToken,
-   removeAuthCode,
-} = require('../methods/oauth_remove_token.js')
+// const {
+//    removeToken,
+//    removeAuthCode,
+// } = require('../methods/oauth_remove_token.js')
 const {
    verify_token
 } = require('../methods/auth_verify.js')
@@ -24,10 +24,7 @@ postAuthCode = async (req, res) =>
 {
    try 
    {
-      const body = R.pickAll(['username', 'access'], req.body)
-      if (!body.username || !body.access) throw "Error: Header is missing user data!"
-
-      const token = await genOAuthCode(body, client)
+      const token = await genOAuthCode(req.body, client)
       res.header("auth_code", token).json(
          {
             code: 200,
@@ -49,9 +46,12 @@ postLogin = async (req, res) =>
 {
    try 
    {
-      const body = R.pickAll(["auth_code", "access", "scope"], req.body)
+      const body = R.pickAll(["auth_code", "scope", "username"], req.body)
       if (!body.auth_code) throw "Error: auth_code was not found!";
-      if (!body.access || !body.scope) throw "Error: Header is missing user data!"
+      if (!body.scope) throw "Error: Header is missing user data!"
+
+      body['access_t'] = '20m' /* access token max time limit */
+      body['access_r'] = '60m' /* refresh token max time limit */
 
       const token =
          [
@@ -88,7 +88,10 @@ postRefresh = async (req, res) =>
    {
       const body = R.pickAll(["username", "access", "scope"], req.body)
       if (!body.username) throw "Error: username was not provided!"
-      if (!body.access || !body.scope) throw "Error: access or scope is missing!"
+      if (!body.scope) throw "Error: access or scope is missing!"
+
+      body['access_t'] = '20m' /* access token max time limit */
+      body['access_r'] = '60m' /* refresh token max time limit */
 
       const token =
          [

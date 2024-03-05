@@ -11,12 +11,15 @@ const {
    postUserLogin,
    postUserLogout
 } = require('../controllers/temp_login_logout')
+const {
+   verify_auth_code,
+} = require('../middleware/verify')
 
 
 
 
 //router.post('/auth/register', postRegister)
-router.post('/auth/auth_code', postAuthCode)
+router.post('/auth/auth_code', verify_auth_code, postAuthCode)
 router.post('/auth/login', postLogin)
 /* require search function */
 router.post('/auth/refresh', postRefresh)

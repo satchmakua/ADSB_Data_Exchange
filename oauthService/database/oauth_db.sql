@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS auth;
 DROP TABLE IF EXISTS oauth;
 
 -- make storage for logs
--- ex. userId, encryptedToken, timeCreated, success, reasonForRequest, scope, lifespan, (transponderId or region)
+-- ex. userId, encryptedToken, timeCreated, status, reasonForRequest, scope, lifespan, (transponderId or region)
 
 -- access token table
 CREATE TABLE auth
