@@ -1,30 +1,15 @@
-const Pool = require('pg').Pool
+//const Pool = require('pg').Pool
 const crypto = require('crypto')
 
-
-// TO-DO: set db up on WSU server and update these settings
-
-const pool = new Pool({
-   user: "janna",
-   host: "localhost",
-   database: "postgres",
-   password: "password",
-   port: 5432
-})
-// const path = require('path')
-// require('dotenv').config(
-//    {
-//       override: true,
-//       path: path.join(__dirname, '../dev.env')
-//    })
 // const pool = new Pool({
-//    user: process.env.USER,
-//    host: process.env.HOST,
-//    database: process.env.DATABASE,
-//    password: process.env.PASSWORD,
-//    port: process.env.DBPORT
-// });
+//    user: "janna",
+//    host: "localhost",
+//    database: "postgres",
+//    password: "password",
+//    port: 5432
+// })
 
+const client = require('../database/db.js')
 
 standardReturn = (res, error, results, errCode, customErrStr) =>
 {
@@ -57,7 +42,12 @@ postUsers = (req, res) =>
    }
    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
-   pool.query(`INSERT INTO users (username, password, salt) VALUES ('${username}', '${hash}', '${salt}') RETURNING *`, (error, results) =>
+   const query = {
+      text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
+      values: [username, hash, salt]
+  };
+
+   client.query(query, (error, results) =>
    {
       if (error)
       {
@@ -81,7 +71,12 @@ isValidUser = (req, res) =>
       return
    }
 
-   pool.query(`SELECT salt from users WHERE username='${username}'`, (error, results) =>
+   const saltQuery = {
+      text: "SELECT salt from users WHERE username=$1",
+      values: [username]
+   }
+
+   client.query(saltQuery, (error, results) =>
    {
       if (error)
       {
@@ -93,7 +88,12 @@ isValidUser = (req, res) =>
 
    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
-   pool.query(`SELECT id FROM users WHERE username='${username}' AND password='${hash}'`, (error, results) =>
+   const query = {
+      text: "SELECT id FROM users WHERE username=$1 AND password=$2",
+      values: [username, hash]
+   }
+
+   client.query(query, (error, results) =>
    {
       if (error)
       {
@@ -111,7 +111,7 @@ isValidUser = (req, res) =>
 // the below code will just return ALL users.
 getUsers = (req, res) =>
 {
-   pool.query('SELECT * FROM users ORDER BY id ASC', (error, results) =>
+   client.query('SELECT * FROM users ORDER BY id ASC', (error, results) =>
    {
       if (error)
       {
@@ -130,7 +130,11 @@ getUsers = (req, res) =>
 getID = (req, res) =>
 {
    const id = parseInt(req.params.id)
-   pool.query(`SELECT * FROM users WHERE id = ${id}`, (error, results) => standardReturn(res, error, results))
+   const query = {
+      text: 'SELECT * FROM users WHERE id = $1',
+      values: [id]
+   }
+   client.query(query, (error, results) => standardReturn(res, error, results))
 }
 
 // delete '/users/:id'
@@ -138,7 +142,11 @@ getID = (req, res) =>
 deleteID = (req, res) =>
 {
    const id = parseInt(req.params.id)
-   pool.query(`DELETE FROM users WHERE id = ${id}`, (error, results) => standardReturn(res, error, results))
+   const query = {
+      text: 'DELETE FROM users WHERE id = $1',
+      values: [id]
+   }
+   client.query(query, (error, results) => standardReturn(res, error, results))
 }
 
 // put '/users/:id'
@@ -146,27 +154,40 @@ deleteID = (req, res) =>
 // Q: just updating password? Option to update username or both?
 putID = (req, res) =>
 {
-   // TO-DO
-   // const id = parseInt(req.params.id)
+   const id = parseInt(req.params.id)
+   const { username, password } = req.body
 
-   // const { username, password } = req.body
+   const salt = crypto.randomBytes(32).toString('hex')
+   if (password == null || password.length < 1 || username == null || username.length < 1 ) {
+       res.status(400).send('username or password not provided.')
+       return
+   }
+   const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
-   // if (username && password) {
+   const queries = [
+      {
+         text: "UPDATE users SET username=$2, password=$3, salt=$4 WHERE id = $1",
+         values: [id, username, hash, salt]
+      },
+      {
+         text: "UPDATE users SET username=$2 WHERE id = $1",
+         values: [id, username]
+      },
+      {
+         text: "UPDATE users SET password=$2, salt=$3 WHERE id = $1",
+         values: [id, hash, salt]
+      }
+   ]
 
-   // } else if (username) {
-
-   // } else if (password) {
-
-   // } else {
-
-   // }
-   // const salt = crypto.randomBytes(32).toString('hex')
-   // if (password == null || password.length < 1 || username == null || username.length < 1 ) {
-   //     res.status(400).send('username or password not provided.')
-   //     return
-   // }
-   // const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
-
+   if (username && password) {
+      client.query(queries[0], (error, results) => standardReturn(res, error, results))
+   } else if (username) {
+      client.query(queries[1], (error, results) => standardReturn(res, error, results))
+   } else if (password) {
+      client.query(queries[2], (error, results) => standardReturn(res, error, results))
+   } else {
+      res.status(402).send('Include username or password in body to update')
+   }
 
 }
 
@@ -177,7 +198,11 @@ postDevices = (req, res) =>
    const id = parseInt(req.params.id)
    const { mac_address, latitude, longitude } = req.body;
    // should get mac_address / identifier from somewhere else???
-   pool.query(`INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES (${id}, '${mac_address}', ${latitude}, ${longitude}) RETURNING *`, (error, results) =>
+   const query = {
+      text: "INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING *",
+      values: [id, mac_address, latitude, longitude]
+   }
+   client.query(query, (error, results) =>
    {
       if (error)
       {
@@ -194,7 +219,11 @@ postDevices = (req, res) =>
 getDevices = (req, res) =>
 {
    const id = parseInt(req.params.id)
-   pool.query(`SELECT * FROM groundstations WHERE user_id = ${id}`, (error, results) =>
+   const query = {
+      text: 'SELECT * FROM groundstations WHERE user_id = $1',
+      values: [id]
+   }
+   client.query(query, (error, results) =>
    {
       if (error)
       {
@@ -211,7 +240,11 @@ getUserDevices = (req, res) =>
 {
    const id = parseInt(req.params.id)
    const deviceid = parseInt(req.params.deviceid)
-   pool.query(`SELECT * FROM groundstations WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) =>
+   const query = {
+      text: 'SELECT * FROM groundstations WHERE user_id = $1 AND id = $2',
+      values: [id, deviceid]
+   }
+   client.query(query, (error, results) =>
    {
       if (error)
       {
@@ -228,7 +261,11 @@ deleteUserDevices = (req, res) =>
 {
    const id = parseInt(req.params.id)
    const deviceid = parseInt(req.params.deviceid)
-   pool.query(`DELETE FROM groundstations WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+   const query = {
+      text: 'DELETE FROM groundstations WHERE user_id = $1 AND id = $2',
+      values: [id, deviceid]
+   }
+   client.query(query, (error, results) => standardReturn(res, error, results))
 }
 
 // put '/users/:id/devices/:deviceid'
@@ -238,15 +275,27 @@ putUserDevices = (req, res) =>
    const id = parseInt(req.params.id)
    const deviceid = parseInt(req.params.deviceid)
    const { latitude, longitude } = req.body
+   const queries = [
+      {
+         text: 'UPDATE groundstations SET latitude = $3, longitude = $4 WHERE user_id = $1 AND id = $2',
+         values: [id, deviceid, latitude, longitude]
+      }, {
+         text: 'UPDATE groundstations SET latitude = $3 WHERE user_id = $1 AND id = $2',
+         values: [id, deviceid, latitude]
+      }, {
+         text: 'UPDATE groundstations SET longitude = $3 WHERE user_id = $1 AND id = $2',
+         values: [id, deviceid, longitude]
+      }
+   ]
    if (latitude && longitude)
    {
-      pool.query(`UPDATE groundstations SET latitude = ${latitude}, longitude = ${longitude} WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+      client.query(queries[0], (error, results) => standardReturn(res, error, results))
    } else if (latitude)
    {
-      pool.query(`UPDATE groundstations SET latitude = ${latitude} WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+      client.query(queries[1], (error, results) => standardReturn(res, error, results))
    } else if (longitude)
    {
-      pool.query(`UPDATE groundstations SET longitude = ${longitude} WHERE user_id = ${id} AND id = ${deviceid}`, (error, results) => standardReturn(res, error, results))
+      client.query(queries[2], (error, results) => standardReturn(res, error, results))
    } else
    {
       res.status(402).send('Include latitude or longitude in body to update')
