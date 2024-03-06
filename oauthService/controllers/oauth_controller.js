@@ -1,100 +1,167 @@
 
 const R = require('ramda')
 
-/* verify auth tokens */
-/* middlewares*/
+/* methods for creating/removing tokens */
 const {
-   genAuthTokens,
    genOAuthCode,
    genAccessToken,
-   removeToken,
-   removeAuthCode,
-} = require('../methods/oauth_methods')
+   genRefreshToken,
+} = require('../methods/oauth_gen_token.js')
+// const {
+//    removeToken,
+//    removeAuthCode,
+// } = require('../methods/oauth_remove_token.js')
+const {
+   verify_auth_code,
+   verify_access_token,
+   verify_refresh_token,
+} = require('../methods/auth_verify.js')
 
 const client = require('../database/db.js')
 
 
 
 
-/* Function for handling OAuth login */
-postLogin = async (req, res) =>
+postAuthCode = async (req, res) =>
 {
-   // const body = R.pick(['email', 'password'], req.body) /* or username? */
-   const body = R.pick(['id'], req.body)
-   /* verify access token */
    try 
    {
-      //const user = await findUserByCredentials(client, body.email, body.password)
-      // const token = await genAuthTokens(user, client)
-      // res.header('x-auth', token).send(R.pick(['username'], user))
-      const token = await genAccessToken(body, client) // make refresh token 
-      res.header('x-auth', token).json(
+      const token = await genOAuthCode(req.body, client)
+      res.header("auth_code", token).json(
          {
             code: 200,
-            message: 'succeeded',
+            message: "success",
          })
    }
    catch (e)
    {
-      console.log(e)
       res.status(400).json(
          {
             code: 400,
             message: e,
          })
    }
-
 }
 
 
-/* Function for handling OAuth logout */
-postLogout = async (req, res) =>
-{ /* DELETE since getting deleting token and access */
-   //const body = R.pick(['username'], req.body)
-   const body = R.pick(['id', 'token'], req.body)
-   //removeToken(body.username, client/*req.token*/).then(
-   removeToken(body, client).then(
-      res.status(200).json(
+postLogin = async (req, res) =>
+{
+   try 
+   {
+      const token =
+         [
+            await genAccessToken(req.body, client),
+            await genRefreshToken(req.body, client)
+         ]
+
+      res.status(200).set(
          {
-            'code': 200,
-            'message': 'succeeded',
-         })
-   ).catch((e) =>
+            access_token: token[0],
+            refresh_token: token[1],
+         }).json(
+            {
+               code: 200,
+               message: "success",
+            })
+   }
+   catch (e)
    {
       res.status(400).json(
          {
             code: 400,
             message: e,
          })
-   })
+   }
 }
+
 
 
 /* Function for refreshing OAuth tokens */
-postRefresh = (req, res) =>
+postRefresh = async (req, res) =>
 {
-   // get id and refresh token 
-   /* delete old token */
-   /* create new access and refresh token */
-   /* return access, refresh, and time created */
-   res.status(200).json({ "oauth": "token refreshed" })
+   try 
+   {
+      const token =
+         [
+            await genAccessToken(req.body, client),
+            await genRefreshToken(req.body, client)
+         ]
+
+      res.status(200).set(
+         {
+            access_token: token[0],
+            refresh_token: token[1],
+         }).json(
+            {
+               code: 200,
+               message: "success"
+            })
+   } catch (e)
+   {
+      res.status(400).json(
+         {
+            code: 400,
+            message: e
+         })
+   }
 }
 
 
-/* Function for handling OAuth callback */
-postCallback = (req, res) =>
+postVerifyToken = async (req, res) =>
 {
-   res.status(200).json({ "oauth": "callback" })
-}
+   try
+   {
+      const body = req.body
 
+      /* verify auth code */
+      if (body.auth_code && !body.access_token && !body.refresh_token) 
+      {
+         let ret_value = true
+         if (verify_auth_code(body) == false) ret_value = false
+
+         res.status(200).json(
+            {
+               code: 200,
+               message: { auth_code: ret_value }
+            })
+      }
+      /* verify access and refresh tokens */
+      else if (!body.auth_code && body.access_token && body.refresh_token)
+      {
+         let access_token = true
+         if (verify_access_token(body) == false) access_token = false
+         let refresh_token = true
+         if (verify_refresh_token(body) == false) refresh_token = false
+
+         res.status(200).json(
+            {
+               code: 200,
+               message:
+               {
+                  'access_token': access_token,
+                  'refresh_token': refresh_token
+               }
+            })
+      }
+      else throw "Error: Invalid token combination!"
+
+   } catch (e)
+   {
+      res.status(400).json(
+         {
+            code: 400,
+            message: e
+         })
+   }
+
+}
 
 
 
 
 module.exports = {
-   //postRegister,
+   postAuthCode,
    postLogin,
    postRefresh,
-   postLogout,
-   postCallback,
+   postVerifyToken,
 }
