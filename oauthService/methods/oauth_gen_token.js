@@ -38,8 +38,6 @@ async function genAccessToken(user, client)
    {
       if (!user) throw "User data is not found!"
 
-      //const body = jwt.verify(user.auth_code, process.env.JWT_SECRET) // will need to move bc it does not fit this function
-
       const payload =
       {
          "username": user.username,
@@ -70,7 +68,6 @@ async function genRefreshToken(user, client)
    {
       if (!user) throw "User data is not found!";
 
-      // const body = jwt.verify(user.auth_token, JWT_SECRET2);
       const payload =
       {
          username: user.username,

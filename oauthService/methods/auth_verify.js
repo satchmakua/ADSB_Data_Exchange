@@ -4,46 +4,50 @@ const jwt = require("jsonwebtoken")
 
 
 
-// generate secret password: require('crypto').randomBytes(64).toString('hex')
-async function verify_token(user, client)
+async function verify_auth_code(user)
 {
-   /*  To Do: Check if user undefined */
-
-   // To Do: Check for access token and if it can be decrypted
    try
    {
-      const payload = jwt.verify(user["auth-token"], process.env.JWT_SECRET2)
-
-      console.log("Success: access token verified. Payload: ", payload)
-
+      const data = jwt.verify(user.access_code, process.env.JWT_SECRET)
+      return data
    } catch (e)
    {
-      // To Do: Check for refresh token and generate new token pair if valid
-      // otherwise throw error
-      try
-      {
-         const payload = jwt.verify(user["refresh-token"], process.env.JWT_SECRET3)
-         console.log("Success: refresh token verified. Payload: ", payload)
-      } catch (e2)
-      {
-         //throw new Error(e2)
-         return {
-            "code": 400,
-            "message": "Could not refresh tokens"
-         }
-      }
+      return false
    }
+}
 
-   // To Do (?): Should we check user db for user info? 
-   //    - prob not since we are the only person who should be able to decode the msg
 
-   return {
-      "code": 200,
-      "message": "We should return a proper success or error and tokens"
+async function verify_access_token(user)
+{
+   try
+   {
+      const data = jwt.verify(user.access_token, process.env.JWT_SECRET2)
+      return data
+   } catch (e)
+   {
+      return false
+   }
+}
+
+
+async function verify_refresh_token(user)
+{
+   try
+   {
+      const data = jwt.verify(user.refresh_token, process.env.JWT_SECRET2)
+      return data
+   } catch (e)
+   {
+      return false
    }
 }
 
 
 
 
-module.exports = { verify_token }
+module.exports =
+{
+   verify_auth_code,
+   verify_access_token,
+   verify_refresh_token,
+}

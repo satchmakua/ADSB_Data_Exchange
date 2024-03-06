@@ -2,6 +2,12 @@ const express = require('express')
 const router = express.Router()
 
 const {
+   setup_auth_code,
+   setup_auth_token,
+   setup_refresh_token,
+   setup_verify,
+} = require('../middleware/setup')
+const {
    postAuthCode,
    postLogin,
    postRefresh,
@@ -11,19 +17,16 @@ const {
    postUserLogin,
    postUserLogout
 } = require('../controllers/temp_login_logout')
-const {
-   verify_auth_code,
-} = require('../middleware/verify')
 
 
 
 
-//router.post('/auth/register', postRegister)
-router.post('/auth/auth_code', verify_auth_code, postAuthCode)
-router.post('/auth/login', postLogin)
+router.post('/auth/auth_code', setup_auth_code, postAuthCode)
+router.post('/auth/login', setup_auth_token, postLogin)
+router.post('/auth/refresh', setup_refresh_token, postRefresh)
+router.post('/auth/verify', setup_verify, postVerifyToken)
+
 /* require search function */
-router.post('/auth/refresh', postRefresh)
-router.post('/auth/verify', postVerifyToken)
 
 /* temp user login */
 router.post('/auth/temp_login', postUserLogin)

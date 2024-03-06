@@ -12,7 +12,9 @@ const {
 //    removeAuthCode,
 // } = require('../methods/oauth_remove_token.js')
 const {
-   verify_token
+   verify_auth_code,
+   verify_access_token,
+   verify_refresh_token,
 } = require('../methods/auth_verify.js')
 
 const client = require('../database/db.js')
@@ -46,17 +48,10 @@ postLogin = async (req, res) =>
 {
    try 
    {
-      const body = R.pickAll(["auth_code", "scope", "username"], req.body)
-      if (!body.auth_code) throw "Error: auth_code was not found!";
-      if (!body.scope) throw "Error: Header is missing user data!"
-
-      body['access_t'] = '20m' /* access token max time limit */
-      body['access_r'] = '60m' /* refresh token max time limit */
-
       const token =
          [
-            await genAccessToken(body, client),
-            await genRefreshToken(body, client)
+            await genAccessToken(req.body, client),
+            await genRefreshToken(req.body, client)
          ]
 
       res.status(200).set(
@@ -86,17 +81,10 @@ postRefresh = async (req, res) =>
 {
    try 
    {
-      const body = R.pickAll(["username", "access", "scope"], req.body)
-      if (!body.username) throw "Error: username was not provided!"
-      if (!body.scope) throw "Error: access or scope is missing!"
-
-      body['access_t'] = '20m' /* access token max time limit */
-      body['access_r'] = '60m' /* refresh token max time limit */
-
       const token =
          [
-            await genAccessToken(body, client),
-            await genRefreshToken(body, client)
+            await genAccessToken(req.body, client),
+            await genRefreshToken(req.body, client)
          ]
 
       res.status(200).set(
@@ -106,7 +94,7 @@ postRefresh = async (req, res) =>
          }).json(
             {
                code: 200,
-               message: "tokens refreshed"
+               message: "success"
             })
    } catch (e)
    {
@@ -121,29 +109,51 @@ postRefresh = async (req, res) =>
 
 postVerifyToken = async (req, res) =>
 {
-   // To Do: Retrieve refresh-token
-   const body = {
-      "auth_token": req.get("auth_token")
-   }
-
-   const verification = await verify_token(body, client)
-   if (verification.code === 400)
+   try
    {
-      res.status(400).json(verification)
-      return
-   }
+      const body = req.body
 
-   // To Do: Check verification.code for new tokens generated token 
-   // else  if {}
-   else
+      /* verify auth code */
+      if (body.auth_code && !body.access_token && !body.refresh_token) 
+      {
+         let ret_value = true
+         if (verify_auth_code(body) == false) ret_value = false
+
+         res.status(200).json(
+            {
+               code: 200,
+               message: { auth_code: ret_value }
+            })
+      }
+      /* verify access and refresh tokens */
+      else if (!body.auth_code && body.access_token && body.refresh_token)
+      {
+         let access_token = true
+         if (verify_access_token(body) == false) access_token = false
+         let refresh_token = true
+         if (verify_refresh_token(body) == false) refresh_token = false
+
+         res.status(200).json(
+            {
+               code: 200,
+               message:
+               {
+                  'access_token': access_token,
+                  'refresh_token': refresh_token
+               }
+            })
+      }
+      else throw "Error: Invalid token combination!"
+
+   } catch (e)
    {
-      // do i need to readd old tokens to header? if so might not need (else if {})
-      res.header('auth_token', body["auth_token"]).json(
+      res.status(400).json(
          {
-            code: 200,
-            message: "success",
+            code: 400,
+            message: e
          })
    }
+
 }
 
 
