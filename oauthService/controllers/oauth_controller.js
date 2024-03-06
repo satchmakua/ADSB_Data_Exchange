@@ -1,100 +1,157 @@
 
 const R = require('ramda')
 
-/* verify auth tokens */
-/* middlewares*/
+/* methods for creating/removing tokens */
 const {
-   genAuthTokens,
    genOAuthCode,
    genAccessToken,
-   removeToken,
-   removeAuthCode,
-} = require('../methods/oauth_methods')
+   genRefreshToken,
+} = require('../methods/oauth_gen_token.js')
+// const {
+//    removeToken,
+//    removeAuthCode,
+// } = require('../methods/oauth_remove_token.js')
+const {
+   verify_token
+} = require('../methods/auth_verify.js')
 
 const client = require('../database/db.js')
 
 
 
 
-/* Function for handling OAuth login */
-postLogin = async (req, res) =>
+postAuthCode = async (req, res) =>
 {
-   // const body = R.pick(['email', 'password'], req.body) /* or username? */
-   const body = R.pick(['id'], req.body)
-   /* verify access token */
    try 
    {
-      //const user = await findUserByCredentials(client, body.email, body.password)
-      // const token = await genAuthTokens(user, client)
-      // res.header('x-auth', token).send(R.pick(['username'], user))
-      const token = await genAccessToken(body, client) // make refresh token 
-      res.header('x-auth', token).json(
+      const token = await genOAuthCode(req.body, client)
+      res.header("auth_code", token).json(
          {
             code: 200,
-            message: 'succeeded',
+            message: "success",
          })
    }
    catch (e)
    {
-      console.log(e)
       res.status(400).json(
          {
             code: 400,
             message: e,
          })
    }
-
 }
 
 
-/* Function for handling OAuth logout */
-postLogout = async (req, res) =>
-{ /* DELETE since getting deleting token and access */
-   //const body = R.pick(['username'], req.body)
-   const body = R.pick(['id', 'token'], req.body)
-   //removeToken(body.username, client/*req.token*/).then(
-   removeToken(body, client).then(
-      res.status(200).json(
+postLogin = async (req, res) =>
+{
+   try 
+   {
+      const body = R.pickAll(["auth_code", "scope", "username"], req.body)
+      if (!body.auth_code) throw "Error: auth_code was not found!";
+      if (!body.scope) throw "Error: Header is missing user data!"
+
+      body['access_t'] = '20m' /* access token max time limit */
+      body['access_r'] = '60m' /* refresh token max time limit */
+
+      const token =
+         [
+            await genAccessToken(body, client),
+            await genRefreshToken(body, client)
+         ]
+
+      res.status(200).set(
          {
-            'code': 200,
-            'message': 'succeeded',
-         })
-   ).catch((e) =>
+            access_token: token[0],
+            refresh_token: token[1],
+         }).json(
+            {
+               code: 200,
+               message: "success",
+            })
+   }
+   catch (e)
    {
       res.status(400).json(
          {
             code: 400,
             message: e,
          })
-   })
+   }
 }
+
 
 
 /* Function for refreshing OAuth tokens */
-postRefresh = (req, res) =>
+postRefresh = async (req, res) =>
 {
-   // get id and refresh token 
-   /* delete old token */
-   /* create new access and refresh token */
-   /* return access, refresh, and time created */
-   res.status(200).json({ "oauth": "token refreshed" })
+   try 
+   {
+      const body = R.pickAll(["username", "access", "scope"], req.body)
+      if (!body.username) throw "Error: username was not provided!"
+      if (!body.scope) throw "Error: access or scope is missing!"
+
+      body['access_t'] = '20m' /* access token max time limit */
+      body['access_r'] = '60m' /* refresh token max time limit */
+
+      const token =
+         [
+            await genAccessToken(body, client),
+            await genRefreshToken(body, client)
+         ]
+
+      res.status(200).set(
+         {
+            access_token: token[0],
+            refresh_token: token[1],
+         }).json(
+            {
+               code: 200,
+               message: "tokens refreshed"
+            })
+   } catch (e)
+   {
+      res.status(400).json(
+         {
+            code: 400,
+            message: e
+         })
+   }
 }
 
 
-/* Function for handling OAuth callback */
-postCallback = (req, res) =>
+postVerifyToken = async (req, res) =>
 {
-   res.status(200).json({ "oauth": "callback" })
-}
+   // To Do: Retrieve refresh-token
+   const body = {
+      "auth_token": req.get("auth_token")
+   }
 
+   const verification = await verify_token(body, client)
+   if (verification.code === 400)
+   {
+      res.status(400).json(verification)
+      return
+   }
+
+   // To Do: Check verification.code for new tokens generated token 
+   // else  if {}
+   else
+   {
+      // do i need to readd old tokens to header? if so might not need (else if {})
+      res.header('auth_token', body["auth_token"]).json(
+         {
+            code: 200,
+            message: "success",
+         })
+   }
+}
 
 
 
 
 module.exports = {
-   //postRegister,
+   postAuthCode,
    postLogin,
    postRefresh,
-   postLogout,
-   postCallback,
+   postVerifyToken,
 }

@@ -1,13 +1,12 @@
 
-/* Import required libraries and modules */
 const express = require('express')
 const bodyParser = require('body-parser')
-const path = require('path')
-require('dotenv').config(
-   {
-      override: true,
-      path: path.join(__dirname, '../dev.env')
-   })
+// const path = require('path')
+// require('dotenv').config(
+//    {
+//       override: true,
+//       path: path.join(__dirname, '../dev.env')
+//    })
 
 
 

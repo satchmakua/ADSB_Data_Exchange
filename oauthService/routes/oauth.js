@@ -2,18 +2,34 @@ const express = require('express')
 const router = express.Router()
 
 const {
-   //   postRegister,
+   postAuthCode,
    postLogin,
-   postLogout,
-   postCallback,
    postRefresh,
+   postVerifyToken,
 } = require('../controllers/oauth_controller')
+const {
+   postUserLogin,
+   postUserLogout
+} = require('../controllers/temp_login_logout')
+const {
+   verify_auth_code,
+} = require('../middleware/verify')
+
+
+
 
 //router.post('/auth/register', postRegister)
+router.post('/auth/auth_code', verify_auth_code, postAuthCode)
 router.post('/auth/login', postLogin)
-router.post('/auth/callback', postCallback)
 /* require search function */
-router.post('/auth/logout', postLogout)
 router.post('/auth/refresh', postRefresh)
+router.post('/auth/verify', postVerifyToken)
+
+/* temp user login */
+router.post('/auth/temp_login', postUserLogin)
+router.post('/auth/temp_logout', postUserLogout)
+
+
+
 
 module.exports = router
