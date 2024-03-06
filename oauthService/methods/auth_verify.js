@@ -34,7 +34,7 @@ async function verify_refresh_token(user)
 {
    try
    {
-      const data = jwt.verify(user.refresh_token, process.env.JWT_SECRET2)
+      const data = jwt.verify(user.refresh_token, process.env.JWT_SECRET3)
       return data
    } catch (e)
    {
