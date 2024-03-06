@@ -1,4 +1,5 @@
 node_modules
 .gitignore
 settings.json
+temp.js
 *~

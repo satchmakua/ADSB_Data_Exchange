@@ -1,20 +1,22 @@
 DROP TABLE IF EXISTS auth;
 DROP TABLE IF EXISTS oauth;
 
+-- make storage for logs
+-- ex. userId, encryptedToken, timeCreated, status, reasonForRequest, scope, lifespan, (transponderId or region)
 
 -- access token table
 CREATE TABLE auth
 (
-	userId serial PRIMARY KEY,
-	accessToken text,
-	refreshToken text,
+	userId serial PRIMARY KEY, -- maybe other identifier
+	accessToken text, -- delete
+	refreshToken text, -- encrypted
    createdAT timestamp NOT NULL default current_timestamp
 ) WITH (OIDS = FALSE);
 
 -- access code table
 CREATE TABLE oauth
 (
-	userId serial PRIMARY KEY,
+	userId serial PRIMARY KEY, -- or other identifier
 	authCode text,
 ) WITH (OIDS = FALSE);
 

@@ -1,13 +1,12 @@
 
-/* Import required libraries and modules */
 const express = require('express')
 const bodyParser = require('body-parser')
-const path = require('path')
-require('dotenv').config(
-   {
-      override: true,
-      path: path.join(__dirname, '../dev.env')
-   })
+// const path = require('path')
+// require('dotenv').config(
+//    {
+//       override: true,
+//       path: path.join(__dirname, '../dev.env')
+//    })
 
 
 
@@ -31,7 +30,7 @@ app.use(function (req, res, next)
 })
 
 /* OAuth routes */
-const oauth = require('./routes/oauth')
+const oauth = require('./routes/oauth_routes')
 app.use(oauth)
 
 // Error handling middleware for server errors
