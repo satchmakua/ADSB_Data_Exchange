@@ -4,7 +4,7 @@ const R = require('ramda')
 const {
    verify_scope,
 } = require('../methods/auth_scope')
-const { func } = require("../database/db")
+// const { func } = require("../database/db")
 
 
 
