@@ -8,9 +8,12 @@ const bodyParser = require('body-parser') // Middleware for parsing HTTP request
 const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 const { Readable, Writable } = require('stream') // Needed for message queues
-
 const WebSocket = require('ws') // WebSocket setup for ADS-B
+
+// need to put locks on these!!
 const groundStationSockets = new Map()
+const userSockets = new Map()
+const activeUserRequests = new Map()
 
 const path = require('path')
 require('dotenv').config({
@@ -48,7 +51,8 @@ logDbConnectionDetails(db)
 // Create an Express application
 const app = express()
 const server = http.createServer(app)
-const wss = new WebSocket.Server({ server })
+const stationSocketServ = new WebSocket.Server({ server })
+const usersSocketServ = new WebSocket.Server({ port: 3003 })
 
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
@@ -64,53 +68,110 @@ const adminQueue = new Readable(
         read() { } // The broker shouldn't ever have to read from queue
     }
 )
-/*
-// TO DO: Need a writable stream that the client socket will be listening to, the queue will then be piped to that stream.
-          The json objects in the queue will need to be stringified before being sent.
-adminQueue.pipe()
-*/
 
-// TO DO: Is this structure going to allow us to disambiguate between ground station sockets and client sockets
-// Handle WebSocket connections
-wss.on('connection', function connection(ws)
+const adminQueueOut = new Writable(
+    {
+        objectMode: true,
+        write() { }
+    }
+)
+
+adminQueue.pipe(adminQueueOut)
+
+// Handle groundstation websocket connections
+stationSocketServ.on('connection', function connection(ws)
 {
     let stationID = 0
 
-    ws.on('init', (id) => 
-    {
-        console.log("Socket init signal received")
-        groundStationSockets.set(id, ws)
-        stationID = id
-    })
-
     ws.on('close', () =>
     {
-        console.log("Socket closed signal")
-        groundStationSockets.delete(stationID)
+        console.log("Groundstation socket closed signal")
+        groundStationSockets.delete(ws) // what is this deleting?
     })
 
     ws.on('message', function incoming(message) 
     {
         let data = JSON.parse(message)
-        console.log('Received message:', data)
+        //console.log('Received message:', data)
 
-        adminQueue.push(data)
+        if (data.type == "init")
+        {
+            console.log("Socket init signal received")
+            stationID = data.stationID
+            console.log('stationID ', stationID)
+            groundStationSockets.set(stationID, ws)
+            console.log("Station socket mapped: " + groundStationSockets.has(stationID))
+        }
+        else
+        {
+            // send message to client websocket
+            //console.log('data.gsID ', data.groundStationID)
+            // create route to get userID from stationID
 
-        // Inserting messages into the database
-        db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
-            .then(() =>
-            {
-                console.log('Message successfully inserted into database')
-            })
-            .catch(err =>
-            {
-                console.error('Error inserting message into database:', err)
-            })
+            const activeRequests = activeUserRequests.get(data.groundStationID)
+            if (activeRequests) {
+
+                userSockets.forEach((ws, userId) => {
+                    // Do something with each WebSocket and its associated key (userId)
+                    //console.log(`WebSocket for user ${userId}:`, ws);
+                    if (activeRequests.includes(userId)) {
+                        ws.send(JSON.stringify(data))
+                        //console.log(`sent data to client ${userId}`)
+                    } 
+                });
+            }
+            
+            adminQueue.push(data)
+
+            db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
+                .then(() =>
+                {
+                    console.log('Message successfully inserted into database')
+                })
+                .catch(err =>
+                {
+                    console.error('Error inserting message into database:', err)
+                })
+        }
+
     })
 })
 
+usersSocketServ.on('connection', function connection(userws)
+{
+    console.log('connection!!!!!')
+    userws.on('message', function incoming(message) 
+    {
+        let data = JSON.parse(message)
+
+        if (data.type == "init")
+        {
+            console.log("Client init signal received")
+            userId = data.userId
+            if (userId == undefined)
+            {
+                console.log('userId is undefined')
+                this.close()
+                return
+            }
+            console.log('userId ', userId)
+            userSockets.set(userId, userws)
+            console.log("Station socket mapped: " + userSockets.has(userId))
+        }
+    })
+
+    userws.on('close', () =>
+    {   
+        console.log("User socket closed signal")
+        userSockets.delete(userId) // or should this be userSockets.delete(usersws) ??
+    })
+
+})
+
+// Authentication should happen in users controller when the client is making a socket connection request
+// that call will then make an internal call back to the broker to hand back a socket connection.
 // // Middleware to authenticate WebSocket connections
-// wss.on('connection', (ws, req) => {
+// stationSocketServ.on('connection', (ws, req) => {
 //     // Placeholder for authentication check, e.g., via token in query params
 //     const token = req.url.split('token=')[1] // Simplified example
 //     if (!token || token !== 'expectedToken') {
@@ -119,25 +180,41 @@ wss.on('connection', function connection(ws)
 //     }
 // })
 
+app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
+{
+    const userId = parseInt(req.params.id)
+    const deviceId = parseInt(req.params.id)
+    //console.log('groundStationSocket keys', groundStationSockets.keys())
+    //console.log('userSockey keys', userSockets.keys())
+
+    if (!groundStationSockets.has(deviceId))
+    {
+        res.status(500).send(`Broker does not have an active connection with groundStation with ID ${deviceId}`)
+        console.log('groundStation Socket Not Found')
+        return
+    }
+    if (!userSockets.has(userId))
+    {
+        res.status(400).send('Websocket has not been created yet. Please make websocket request')
+        console.log('client websocket not found')
+        return
+    }
+    //console.log('activeUserRequests ', activeUserRequests.keys())
+    // add userId to deviceId stream to Queue
+    if (!activeUserRequests.get(deviceId)) {
+        //console.log('no active requests')
+        activeUserRequests.set(deviceId, [userId])
+    } else {
+        //console.log('adding value to active requerstss')
+        let activeRequests = activeUserRequests.get(deviceId)
+        activeRequests.add(userId)
+        activeUserRequests.set(deviceId, activeRequests)
+    }
+})
+
 // Forward API call to the appropriate service
 app.all("/users/*", proxy(user))
 app.all("/auth/*", proxy(auth))
-
-app.get('/groundstation/websocket', (req, res) =>
-{
-    const ws = new WebSocket('ws://localhost:3000')
-})
-
-
-// Handle WebSocket upgrade requests
-app.on('upgrade', (request, socket, head) =>
-{
-    wss.handleUpgrade(request, socket, head, (ws) =>
-    {
-        groundStationSockets.set(request.groundStationID, socket)
-        wss.emit('connection', ws, request)
-    })
-})
 
 // GET route to fetch messages from the database
 app.get('/message', async (req, res) =>
@@ -151,14 +228,6 @@ app.get('/message', async (req, res) =>
         res.status(500).send("Error fetching messages: " + err)
     }
 
-})
-
-// Placeholder routes for subscribing and unsubscribing (TODO: Implement logic)
-app.post('/subscribe', async (req, res) =>
-{
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to add the topic to the subscriber's list of subscriptions
-    res.status(200).send("Subscribed successfully!")
 })
 
 // Actual implementation for subscription management
@@ -188,13 +257,6 @@ app.post('/unsubscribe', (req, res) =>
     {
         res.status(404).json({ message: `Subscription not found for topic ${topic}` })
     }
-})
-
-app.post('/unsubscribe', async (req, res) =>
-{
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to remove the topic from the subscriber's list of subscriptions
-    res.status(200).send("Unsubscribed successfully!")
 })
 
 // Error handling middleware for server errors
@@ -252,7 +314,7 @@ const shutdown = () =>
     server.close(() =>
     {
         console.log('HTTP server closed.')
-        wss.close(() =>
+        stationSocketServ.close(() =>
         {
             console.log('WebSocket server closed.')
             pgp.end().then(() =>
@@ -266,4 +328,43 @@ const shutdown = () =>
 
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
+
+
+// OLD WEBSOCKET CODE
+// Tested without and determined that this code is not accessed or needed to run websockets
+
+// app.get('/groundstation/websocket', (req, res) =>
+// {
+//     const ws = new WebSocket('ws://localhost:3000')
+// })
+
+// app.get('/users/websocket/:userId', (req, res) =>
+// {
+//     const userId = parseInt(req.params.userId)
+//     const userws = new WebSocket(`ws://localhost:3003/${userId}`)
+//     console.log('here')
+// })
+
+// TO DO: How and when is this used??
+// Handle WebSocket upgrade requests
+// app.on('upgrade', (request, socket, head) =>
+// {
+//     if (request.headers['upgrade'] !== 'websocket')
+//     {
+//         console.log('Not a websocket upgrade request')
+//         return
+//     }
+//     console.log("Socket upgraded!!!!!!")
+//     stationSocketServ.handleUpgrade(request, socket, head, (ws) =>
+//     {
+//         groundStationSockets.set(request.groundStationID, socket)
+//         stationSocketServ.emit('connection', ws, request)
+//     })
+//     usersSocketServ.handleUpgrade(request, socket, head, (ws) =>
+//     {
+//         const userId = parseInt(request.params.userId)
+//         userSockets.set(userId, ws)
+//         usersSocketServ.emit('connection', ws, request)
+//     })  
+// })
 
