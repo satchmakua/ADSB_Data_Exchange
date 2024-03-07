@@ -6,7 +6,7 @@ const {
    setup_auth_token,
    setup_refresh_token,
    setup_verify,
-} = require('../middleware/setup')
+} = require('../middleware/uri_setup')
 const {
    postAuthCode,
    postLogin,
