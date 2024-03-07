@@ -213,8 +213,8 @@ app.post("/users/:id/devices/:deviceid/stream", (req, res) =>
 })
 
 // Forward API call to the appropriate service
-// app.all("/users/*", proxy(user))
-// app.all("/auth/*", proxy(auth))
+app.all("/users/*", proxy(user))
+app.all("/auth/*", proxy(auth))
 
 // GET route to fetch messages from the database
 app.get('/message', async (req, res) =>
@@ -228,14 +228,6 @@ app.get('/message', async (req, res) =>
         res.status(500).send("Error fetching messages: " + err)
     }
 
-})
-
-// Placeholder routes for subscribing and unsubscribing (TODO: Implement logic)
-app.post('/subscribe', async (req, res) =>
-{
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to add the topic to the subscriber's list of subscriptions
-    res.status(200).send("Subscribed successfully!")
 })
 
 // Actual implementation for subscription management
@@ -265,13 +257,6 @@ app.post('/unsubscribe', (req, res) =>
     {
         res.status(404).json({ message: `Subscription not found for topic ${topic}` })
     }
-})
-
-app.post('/unsubscribe', async (req, res) =>
-{
-    const { subscriberId, topic } = req.body
-    // TODO: Logic to remove the topic from the subscriber's list of subscriptions
-    res.status(200).send("Unsubscribed successfully!")
 })
 
 // Error handling middleware for server errors
