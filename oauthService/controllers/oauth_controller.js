@@ -116,34 +116,40 @@ postVerifyToken = async (req, res) =>
       /* verify auth code */
       if (body.auth_code && !body.access_token && !body.refresh_token) 
       {
-         let ret_value = true
-         if (verify_auth_code(body) == false) ret_value = false
+         let auth_code = true
+         if (await verify_auth_code(body) === false) auth_code = false
 
          res.status(200).json(
             {
                code: 200,
-               message: { auth_code: ret_value }
+               message: { auth_code: auth_code }
             })
       }
-      /* verify access and refresh tokens */
-      else if (!body.auth_code && body.access_token && body.refresh_token)
+      /* verify access token */
+      else if (!body.auth_code && body.access_token && !body.refresh_token)
       {
          let access_token = true
-         if (verify_access_token(body) == false) access_token = false
-         let refresh_token = true
-         if (verify_refresh_token(body) == false) refresh_token = false
+         if (await verify_access_token(body) === false) access_token = false
 
          res.status(200).json(
             {
                code: 200,
-               message:
-               {
-                  'access_token': access_token,
-                  'refresh_token': refresh_token
-               }
+               message: { 'access_token': access_token }
             })
       }
-      else throw "Error: Invalid token combination!"
+      /* verify refresh tokens */
+      else if (!body.auth_code && !body.access_token && body.refresh_token)
+      {
+         let refresh_token = true
+         if (await verify_refresh_token(body) === false) refresh_token = false
+
+         res.status(200).json(
+            {
+               code: 200,
+               message: { 'refresh_token': refresh_token }
+            })
+      }
+      else throw "Error: User input has too many tokens! Only input 1 token."
 
    } catch (e)
    {
