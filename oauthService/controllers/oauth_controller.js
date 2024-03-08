@@ -116,8 +116,8 @@ postVerifyToken = async (req, res) =>
       /* verify auth code */
       if (body.auth_code && !body.access_token && !body.refresh_token) 
       {
-         let auth_code = true
-         if (await verify_auth_code(body) === false) auth_code = false
+         let auth_code = (await verify_auth_code(body))
+         if (auth_code === false) auth_code = false
 
          res.status(200).json(
             {
@@ -128,8 +128,8 @@ postVerifyToken = async (req, res) =>
       /* verify access token */
       else if (!body.auth_code && body.access_token && !body.refresh_token)
       {
-         let access_token = true
-         if (await verify_access_token(body) === false) access_token = false
+         let access_token = (await verify_access_token(body))
+         if (access_token === false) access_token = false
 
          res.status(200).json(
             {
@@ -140,8 +140,8 @@ postVerifyToken = async (req, res) =>
       /* verify refresh tokens */
       else if (!body.auth_code && !body.access_token && body.refresh_token)
       {
-         let refresh_token = true
-         if (await verify_refresh_token(body) === false) refresh_token = false
+         let refresh_token = (await verify_refresh_token(body))
+         if (refresh_token === false) refresh_token = false
 
          res.status(200).json(
             {
