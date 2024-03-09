@@ -37,7 +37,7 @@ async function verify_tokens(req, res, next)
       /* verify access token */
       const body1 = { access_token: req.get("access_token") }
 
-      if (body1.access_token === undefined) throw "access token is undefined!"
+      if (body1.access_token === undefined) throw "Error: access token is undefined!"
 
       const message = (await axios.post((URI + '/verify'), body1)).data.message
 
@@ -45,27 +45,27 @@ async function verify_tokens(req, res, next)
       if (message.access_token === false)
       {
          const body2 = { refresh_token: req.get("refresh_token") }
-         if (body2.refresh_token === undefined) throw "refresh token is undefined!"
+         if (body2.refresh_token === undefined) throw "Error: refresh token is undefined!"
 
          const msg = (await axios.post((URI + '/verify'), body2)).data.message
-         if (msg.refresh_token === false) throw "refresh token cannot be verified"
+         if (msg.refresh_token === false) throw "Error: refresh token cannot be verified"
 
-         res.body["new_tokens"] = (await axios.post((URI + '/refresh'),
-            {
-               access_token: 7,
-               refresh_token: 8
-            }))
-         console.log(req.body.new_tokens)
+         const tokens = (await axios.post((URI + '/refresh'), msg.refresh_token)).headers
+         res["new_tokens"] =
+         {
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token
+         }
       }
       else
       {
-         res.body["new_tokens"] = false
+         res["new_tokens"] = false
       }
 
       next()
    } catch (e)
    {
-
+      res.status(400).json({ code: 400, message: e })
    }
 
 }

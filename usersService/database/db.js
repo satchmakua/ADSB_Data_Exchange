@@ -3,7 +3,7 @@ const path = require('path')
 require('dotenv').config
    ({
       override: true,
-      path: path.join(__dirname, '../dev.env')
+      path: path.join(__dirname, '../../dev.env')
    })
 
 const client = pgp({

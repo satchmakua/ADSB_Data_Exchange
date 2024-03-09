@@ -8,8 +8,12 @@ const crypto = require('crypto')
 //    password: "password",
 //    port: 5432
 // })
-
+const { get_auth_code } = require('../oauth/verify_tokens_methods.js')
 const client = require('../database/db.js')
+const { use } = require('../oauth/verify_route.js')
+
+
+
 
 standardReturn = (res, error, results, errCode, customErrStr) =>
 {
@@ -45,7 +49,7 @@ postUsers = (req, res) =>
    const query = {
       text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
       values: [username, hash, salt]
-  };
+   };
 
    client.query(query, (error, results) =>
    {
@@ -93,13 +97,23 @@ isValidUser = (req, res) =>
       values: [username, hash]
    }
 
-   client.query(query, (error, results) =>
+   client.query(query, async (error, results) =>
    {
       if (error)
       {
          res.status(400).send('Invalid Password.')
          return
       }
+
+      try
+      {
+         const token = await get_auth_code({ username: username })
+         console.log("Inside Jannas function: ", token)
+      } catch (e)
+      {
+         res.status(400).json(e)
+      }
+
       res.status(201).send('User Verified.')
    })
 }
@@ -158,9 +172,10 @@ putID = (req, res) =>
    const { username, password } = req.body
 
    const salt = crypto.randomBytes(32).toString('hex')
-   if (password == null || password.length < 1 || username == null || username.length < 1 ) {
-       res.status(400).send('username or password not provided.')
-       return
+   if (password == null || password.length < 1 || username == null || username.length < 1)
+   {
+      res.status(400).send('username or password not provided.')
+      return
    }
    const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
@@ -179,13 +194,17 @@ putID = (req, res) =>
       }
    ]
 
-   if (username && password) {
+   if (username && password)
+   {
       client.query(queries[0], (error, results) => standardReturn(res, error, results))
-   } else if (username) {
+   } else if (username)
+   {
       client.query(queries[1], (error, results) => standardReturn(res, error, results))
-   } else if (password) {
+   } else if (password)
+   {
       client.query(queries[2], (error, results) => standardReturn(res, error, results))
-   } else {
+   } else
+   {
       res.status(402).send('Include username or password in body to update')
    }
 

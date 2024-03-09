@@ -1,23 +1,28 @@
 const express = require('express')
 const router = express.Router()
 
+const { verify_tokens } = require('../oauth/verify_tokens_middleware')
+
+
+
+
 const {
-    postUsers,
-    isValidUser,
-    getUsers,
-    getID,
-    deleteID,
-    putID,
-    getConnect,
-    putDisconnect,
-    postDevices,
-    getDevices,
-    getUserDevices,
-    deleteUserDevices,
-    putUserDevices,
-    //getConnectUserDevices,
-    //putDisconnectUserDevices,
-    getAdsbUserDevices,
+   postUsers,
+   isValidUser,
+   getUsers,
+   getID,
+   deleteID,
+   putID,
+   getConnect,
+   putDisconnect,
+   postDevices,
+   getDevices,
+   getUserDevices,
+   deleteUserDevices,
+   putUserDevices,
+   //getConnectUserDevices,
+   //putDisconnectUserDevices,
+   getAdsbUserDevices,
 } = require('../controllers/users_controller')
 
 router.post('/', postUsers)
