@@ -59,7 +59,7 @@ postUsers = async (req, res) =>
       res.status(201).header("auth_code", token).send(`User added with ID: ${results[0].id}`)
    } catch (e)
    {
-      res.status(500).send('User registration failed.')
+      res.status(500).send('Error: User registration failed.')
    }
    // const { username, password } = req.body
 
@@ -133,7 +133,7 @@ isValidUser = async (req, res) =>
       res.status(201).header('auth_code', token).send('User Verified.')
    } catch (e)
    {
-      res.status(500).send('User login failed.')
+      res.status(500).send('Error: User login failed.')
    }
 }
 
@@ -142,201 +142,255 @@ isValidUser = async (req, res) =>
 // list users with query
 // Q: need some explanation on the query?
 // the below code will just return ALL users.
-getUsers = (req, res) =>
+getUsers = async (req, res) =>
 {
-   client.query('SELECT * FROM users ORDER BY id ASC', (error, results) =>
+   try
    {
-      if (error)
-      {
-         res.status(500).send('Unable to retrieve user list.')
-         console.log("hit users")
-         return
-      }
-      res.status(200).json(results.rows)
-   })
+      const users = (await client.query('SELECT * FROM users ORDER BY id ASC'))
+      if (!users) throw "Error: Users could not be retrieved!"
 
+      res.status(200).json(users)
+   } catch (e)
+   {
+      res.status(500).send('Error: Unable to retrieve user list.')
+   }
 }
 
 // get '/users/:id'
 // get user given user id
 // Q: what should be returned? just username?
-getID = (req, res) =>
+getID = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const query = {
-      text: 'SELECT * FROM users WHERE id = $1',
-      values: [id]
+   try 
+   {
+      const id = parseInt(req.params.id)
+      const query = {
+         text: 'SELECT * FROM users WHERE id = $1',
+         values: [id]
+      }
+
+      const user = (await client.query(query))[0]
+      if (!user) throw "Error: Unable to retrieve user."
+
+      res.status(200).json(user)
+   } catch (e)
+   {
+      res.status(500).send('Error: Unable to retrieve user.')
    }
-   client.query(query, (error, results) => standardReturn(res, error, results))
+
 }
 
 // delete '/users/:id'
 // delete user given user id
-deleteID = (req, res) =>
+deleteID = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const query = {
-      text: 'DELETE FROM users WHERE id = $1',
-      values: [id]
+   try
+   {
+      const id = parseInt(req.params.id)
+      const query = {
+         text: 'DELETE FROM users WHERE id = $1',
+         values: [id]
+      }
+
+      const result = client.query(query)
+      if (!result) throw 'Error: Unable to delete user.'
+
+      res.status(200).json(
+         {
+            code: 200,
+            message: "User deleted!"
+         })
+   } catch (e)
+   {
+      res.status(500).send('Error: Unable to delete user.')
    }
-   client.query(query, (error, results) => standardReturn(res, error, results))
 }
 
 // put '/users/:id'
 // update user given user id
 // Q: just updating password? Option to update username or both?
-putID = (req, res) =>
+putID = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const { username, password } = req.body
-
-   const salt = crypto.randomBytes(32).toString('hex')
-   if (password == null || password.length < 1 || username == null || username.length < 1)
+   try
    {
-      res.status(400).send('username or password not provided.')
-      return
-   }
-   const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+      const id = parseInt(req.params.id)
+      const { username, password } = req.body
 
-   const queries = [
+      const salt = crypto.randomBytes(32).toString('hex')
+      if (password == null || password.length < 1 || username == null || username.length < 1)
       {
-         text: "UPDATE users SET username=$2, password=$3, salt=$4 WHERE id = $1",
-         values: [id, username, hash, salt]
-      },
-      {
-         text: "UPDATE users SET username=$2 WHERE id = $1",
-         values: [id, username]
-      },
-      {
-         text: "UPDATE users SET password=$2, salt=$3 WHERE id = $1",
-         values: [id, hash, salt]
+         res.status(400).send('username or password not provided.')
+         return
       }
-   ]
+      const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
-   if (username && password)
+      const queries = [
+         {
+            text: "UPDATE users SET username=$2, password=$3, salt=$4 WHERE id = $1",
+            values: [id, username, hash, salt]
+         },
+         {
+            text: "UPDATE users SET username=$2 WHERE id = $1",
+            values: [id, username]
+         },
+         {
+            text: "UPDATE users SET password=$2, salt=$3 WHERE id = $1",
+            values: [id, hash, salt]
+         }
+      ]
+
+      let results = null
+      if (username && password)
+      {
+         results = await client.query(queries[0])
+      } else if (username)
+      {
+         results = await client.query(queries[1])
+      } else if (password)
+      {
+         results = await client.query(queries[2])
+      } else
+      {
+         res.status(402).send('Include username or password in body to update')
+         return
+      }
+
+      res.status(200).send(results)
+   } catch (e)
    {
-      client.query(queries[0], (error, results) => standardReturn(res, error, results))
-   } else if (username)
-   {
-      client.query(queries[1], (error, results) => standardReturn(res, error, results))
-   } else if (password)
-   {
-      client.query(queries[2], (error, results) => standardReturn(res, error, results))
-   } else
-   {
-      res.status(402).send('Include username or password in body to update')
+      res.status(500).send('Error: Unable to update user.')
    }
 
 }
 
 // post '/users/:id/devices'
 // input a new device tied to user id
-postDevices = (req, res) =>
+postDevices = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const { mac_address, latitude, longitude } = req.body;
-   // should get mac_address / identifier from somewhere else???
-   const query = {
-      text: "INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING *",
-      values: [id, mac_address, latitude, longitude]
-   }
-   client.query(query, (error, results) =>
+   try
    {
-      if (error)
-      {
-         res.status(500).send(`Error: ${error}`)
-         return
+      const id = parseInt(req.params.id)
+      const { mac_address, latitude, longitude } = req.body;
+      // should get mac_address / identifier from somewhere else???
+      const query = {
+         text: "INSERT INTO groundstations (user_id, mac_address, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING *",
+         values: [id, mac_address, latitude, longitude]
       }
-      res.status(201).send(`Device ${mac_address} added with id ${results.rows[0].id} and associated with user ${id}`)
-   })
+
+      const results = await client.query(query)
+
+      res.status(201).send(`Device ${mac_address} added with id ${results[0].id} and associated with user ${id}`)
+   } catch (e)
+   {
+      res.status(500).send(`Error: ${e}`)
+   }
 }
 
 // get '/users/:id/devices?limit=<param>&start[< "l,g" + "e, ">]=<param>'
 // get devices from a user given query
 // Q: so this query will only be for a specific user?
-getDevices = (req, res) =>
+getDevices = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const query = {
-      text: 'SELECT * FROM groundstations WHERE user_id = $1',
-      values: [id]
-   }
-   client.query(query, (error, results) =>
+   try
    {
-      if (error)
-      {
-         res.status(500).send(`Error: ${error}`)
-         return
+      const id = parseInt(req.params.id)
+      const query = {
+         text: 'SELECT * FROM groundstations WHERE user_id = $1',
+         values: [id]
       }
-      res.status(200).send(results.rows)
-   })
+      const results = await client.query(query)
+
+      res.status(200).send(results)
+   } catch (e)
+   {
+      res.status(500).send(`Error: ${e}`)
+   }
 }
 
 // get '/users/:id/devices/:deviceid'
 // get device information given a device ID and user ID
-getUserDevices = (req, res) =>
+getUserDevices = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const deviceid = parseInt(req.params.deviceid)
-   const query = {
-      text: 'SELECT * FROM groundstations WHERE user_id = $1 AND id = $2',
-      values: [id, deviceid]
-   }
-   client.query(query, (error, results) =>
+   try
    {
-      if (error)
-      {
-         res.status(500).send(`Error: ${error}`)
-         return
+      const id = parseInt(req.params.id)
+      const deviceid = parseInt(req.params.deviceid)
+      const query = {
+         text: 'SELECT * FROM groundstations WHERE user_id = $1 AND id = $2',
+         values: [id, deviceid]
       }
-      res.status(200).send(results.rows)
-   })
+      const results = await client.query(query)
+
+      res.status(200).send(results)
+   } catch (e)
+   {
+      res.status(500).send(`Error: ${e}`)
+   }
 }
 
 // delete '/users/:id/devices/:deviceid'
 // delete a device tied to a specific user
-deleteUserDevices = (req, res) =>
+deleteUserDevices = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const deviceid = parseInt(req.params.deviceid)
-   const query = {
-      text: 'DELETE FROM groundstations WHERE user_id = $1 AND id = $2',
-      values: [id, deviceid]
+   try
+   {
+      const id = parseInt(req.params.id)
+      const deviceid = parseInt(req.params.deviceid)
+      const query = {
+         text: 'DELETE FROM groundstations WHERE user_id = $1 AND id = $2',
+         values: [id, deviceid]
+      }
+      const results = await client.query(query)
+
+      res.status(200).send(results)
+   } catch (e)
+   {
+      res.status(500).send('Error: Unable to .')
    }
-   client.query(query, (error, results) => standardReturn(res, error, results))
 }
 
 // put '/users/:id/devices/:deviceid'
 // update a device tied to a specific user
-putUserDevices = (req, res) =>
+putUserDevices = async (req, res) =>
 {
-   const id = parseInt(req.params.id)
-   const deviceid = parseInt(req.params.deviceid)
-   const { latitude, longitude } = req.body
-   const queries = [
+   try
+   {
+      const id = parseInt(req.params.id)
+      const deviceid = parseInt(req.params.deviceid)
+      const { latitude, longitude } = req.body
+      const queries = [
+         {
+            text: 'UPDATE groundstations SET latitude = $3, longitude = $4 WHERE user_id = $1 AND id = $2',
+            values: [id, deviceid, latitude, longitude]
+         }, {
+            text: 'UPDATE groundstations SET latitude = $3 WHERE user_id = $1 AND id = $2',
+            values: [id, deviceid, latitude]
+         }, {
+            text: 'UPDATE groundstations SET longitude = $3 WHERE user_id = $1 AND id = $2',
+            values: [id, deviceid, longitude]
+         }
+      ]
+
+      let results = null
+      if (latitude && longitude)
       {
-         text: 'UPDATE groundstations SET latitude = $3, longitude = $4 WHERE user_id = $1 AND id = $2',
-         values: [id, deviceid, latitude, longitude]
-      }, {
-         text: 'UPDATE groundstations SET latitude = $3 WHERE user_id = $1 AND id = $2',
-         values: [id, deviceid, latitude]
-      }, {
-         text: 'UPDATE groundstations SET longitude = $3 WHERE user_id = $1 AND id = $2',
-         values: [id, deviceid, longitude]
+         results = await client.query(queries[0])
+      } else if (latitude)
+      {
+         results = await client.query(queries[1])
+      } else if (longitude)
+      {
+         results = await client.query(queries[2])
+      } else
+      {
+         res.status(402).send('Include latitude or longitude in body to update')
+         return
       }
-   ]
-   if (latitude && longitude)
+
+      res.status(200).send(results)
+   } catch (e)
    {
-      client.query(queries[0], (error, results) => standardReturn(res, error, results))
-   } else if (latitude)
-   {
-      client.query(queries[1], (error, results) => standardReturn(res, error, results))
-   } else if (longitude)
-   {
-      client.query(queries[2], (error, results) => standardReturn(res, error, results))
-   } else
-   {
-      res.status(402).send('Include latitude or longitude in body to update')
+      res.status(500).send('Error: Unable to update device.')
    }
 }
 

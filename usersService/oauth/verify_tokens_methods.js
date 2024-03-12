@@ -13,7 +13,7 @@ async function get_auth_code(user)
    {
       const token = (await axios.post((URI + '/auth_code'), user)).headers
       if (token.auth_code === undefined) throw "Error: authentication cannot be generated!"
-      //console.log(token)
+
       return token.auth_code
    } catch (e)
    {
