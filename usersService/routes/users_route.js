@@ -1,14 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
-const { verify_tokens } = require('../oauth/verify_tokens_middleware')
-
-
-
-
 const {
-   postUsers,
-   isValidUser,
    getUsers,
    getID,
    deleteID,
@@ -25,14 +18,13 @@ const {
    getAdsbUserDevices,
 } = require('../controllers/users_controller')
 
-router.post('/', postUsers)
 
-router.post('/validate', isValidUser)
+
 
 // router.get('?limit=<param>&start[< "l,g" + "e, ">]=<param>',
 // getUsers)
 // once query is implemented uncomment line 24 and delete below line
-router.get('', verify_tokens, getUsers)
+router.get('', getUsers)
 
 router.get('/:id', getID)
 
@@ -60,5 +52,8 @@ router.put('/:id/devices/:deviceid', putUserDevices)
 //router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices)
 
 router.get('/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
+
+
+
 
 module.exports = router

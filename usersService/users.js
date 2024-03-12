@@ -44,11 +44,21 @@ app.use(bodyParser.json())
 //    next()
 //  })
 
-/* User routes */
-const users = require('./routes/users_route')
-app.use('/users', users)
+/* login/register URI */
+const user_config = require('./routes/users_login_route')
+app.use('/users', user_config)
+
+/* API calls to oauth service */
 const verify_users = require('./oauth/verify_route')
 app.use(verify_users)
+
+/* User routes */
+// Warning: verify_tokens applies to any other defined '/users' route from this point
+// If you need to create new URI's, define them before this point
+const users = require('./routes/users_route')
+const { verify_tokens } = require('./oauth/verify_tokens_middleware')
+app.use('/users', verify_tokens, users)
+
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) => 
