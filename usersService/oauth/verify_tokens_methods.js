@@ -2,8 +2,7 @@ const jwt = require("jsonwebtoken")
 const R = require('ramda')
 const axios = require('axios')
 
-const URI = 'http://localhost:3000/auth'
-
+const { URI_auth_code } = require('./URI')
 
 
 
@@ -11,7 +10,7 @@ async function get_auth_code(user)
 {
    try
    {
-      const token = (await axios.post((URI + '/auth_code'), user)).headers
+      const token = (await axios.post(URI_auth_code, user)).headers
       if (token.auth_code === undefined) throw "Error: authentication cannot be generated!"
 
       return token.auth_code

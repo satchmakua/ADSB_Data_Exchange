@@ -45,7 +45,7 @@ app.use(bodyParser.json())
 //  })
 
 /* User routes */
-const users = require('./routes/users')
+const users = require('./routes/users_route')
 app.use('/users', users)
 const verify_users = require('./oauth/verify_route')
 app.use(verify_users)

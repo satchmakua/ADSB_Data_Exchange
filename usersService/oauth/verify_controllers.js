@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const URI = 'http://localhost:3000/auth'
+const { URI_login, URI_refresh } = require('./URI')
 
 
 
@@ -9,7 +9,7 @@ postLoginExchange = async (req, res) =>
 {
    try 
    {
-      const tokens = (await axios.post((URI + '/login'), req.body)).headers
+      const tokens = (await axios.post(URI_login, req.body)).headers
       res.status(200).set(
          {
             access_token: tokens.access_token,
@@ -34,7 +34,7 @@ postRefreshTokens = async (req, res) =>
 {
    try 
    {
-      const tokens = (await axios.post((URI + '/refresh'), req.body)).headers
+      const tokens = (await axios.post(URI_refresh, req.body)).headers
       res.status(200).set(
          {
             access_token: tokens.access_token,

@@ -3,7 +3,7 @@ const R = require('ramda')
 const axios = require('axios')
 const { verify } = require("crypto")
 
-const URI = 'http://localhost:3000/auth'
+const { URI_verify, URI_refresh } = require('./URI')
 
 
 
@@ -15,7 +15,7 @@ async function request_auth_code_verification(req, res, next)
       const body = { auth_code: req.get("auth_code") }
       if (body.auth_code === undefined) throw "authentication code is undefined!"
 
-      const message = (await axios.post((URI + '/verify'), body)).data.message
+      const message = (await axios.post(URI_verify, body)).data.message
       if (message.auth_code === false) throw "authentication code cannot be verified"
 
       message.auth_code["scope"] = req.body.scope
@@ -39,7 +39,7 @@ async function verify_tokens(req, res, next)
 
       if (body1.access_token === undefined) throw "Error: access token is undefined!"
 
-      const message = (await axios.post((URI + '/verify'), body1)).data.message
+      const message = (await axios.post(URI_verify, body1)).data.message
 
       /* if access token failed, refresh token... */
       if (message.access_token === false)
@@ -47,10 +47,10 @@ async function verify_tokens(req, res, next)
          const body2 = { refresh_token: req.get("refresh_token") }
          if (body2.refresh_token === undefined) throw "Error: refresh token is undefined!"
 
-         const msg = (await axios.post((URI + '/verify'), body2)).data.message
+         const msg = (await axios.post(URI_verify, body2)).data.message
          if (msg.refresh_token === false) throw "Error: refresh token cannot be verified"
 
-         const tokens = (await axios.post((URI + '/refresh'), msg.refresh_token)).headers
+         const tokens = (await axios.post(URI_refresh, msg.refresh_token)).headers
          res["new_tokens"] =
          {
             access_token: tokens.access_token,
@@ -97,7 +97,7 @@ async function request_refresh_token_verification(req, res, next)
       const body = { refresh_token: req.get("refresh_token") }
       if (body.refresh_token === undefined) throw "refresh token is undefined!"
 
-      const message = (await axios.post((URI + '/verify'), body)).data.message
+      const message = (await axios.post(URI_refresh, body)).data.message
       if (message.refresh_token === false) throw "refresh token cannot be verified"
 
       req.body = message.refresh_token
