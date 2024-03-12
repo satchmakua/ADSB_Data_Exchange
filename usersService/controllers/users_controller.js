@@ -10,7 +10,7 @@ const crypto = require('crypto')
 // })
 const { get_auth_code } = require('../oauth/verify_tokens_methods.js')
 const client = require('../database/db.js')
-const { use } = require('../oauth/verify_route.js')
+//const { use } = require('../oauth/verify_route.js')
 
 
 
@@ -34,88 +34,107 @@ standardReturn = (res, error, results, errCode, customErrStr) =>
 
 // post '/users'
 // create user
-postUsers = (req, res) =>
+postUsers = async (req, res) =>
 {
-   const { username, password } = req.body
-
-   const salt = crypto.randomBytes(32).toString('hex')
-   if (password == null || password.length < 1 || username == null || username.length < 1)
+   try
    {
-      res.status(400).send('username or password not provided.')
-      return
-   }
-   const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+      const { username, password } = req.body
 
-   const query = {
-      text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
-      values: [username, hash, salt]
-   };
-
-   client.query(query, (error, results) =>
-   {
-      if (error)
+      const salt = crypto.randomBytes(32).toString('hex')
+      if (password == null || password.length < 1 || username == null || username.length < 1)
       {
-         res.status(500).send('User registration failed.')
+         res.status(400).send('username or password not provided.')
          return
       }
-      res.status(201).send(`User added with ID: ${results.rows[0].id}`)
-   })
+      const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+
+      const query = {
+         text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
+         values: [username, hash, salt]
+      };
+
+      const results = await client.query(query)
+      const token = await get_auth_code({ username }) // dont need token here only create when login?
+
+      res.status(201).header("auth_code", token).send(`User added with ID: ${results[0].id}`)
+   } catch (e)
+   {
+      res.status(500).send('User registration failed.')
+   }
+   // const { username, password } = req.body
+
+   // const salt = crypto.randomBytes(32).toString('hex')
+   // if (password == null || password.length < 1 || username == null || username.length < 1)
+   // {
+   //    res.status(400).send('username or password not provided.')
+   //    return
+   // }
+   // const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+
+   // const query = {
+   //    text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
+   //    values: [username, hash, salt]
+   // };
+
+   // client.query(query, (error, results) =>
+   // {
+   //    if (error)
+   //    {
+   //       res.status(500).send('User registration failed.')
+   //       return
+   //    }
+   //    res.status(201).send(`User added with ID: ${results.rows[0].id}`)
+   // })
 }
 
 // post '/users/validate'
 // validate that user login information is correct when user first logs into the application
-isValidUser = (req, res) =>
+isValidUser = async (req, res) =>
 {
-   const { username, password } = req.body;
-   let salt = ''
-
-   if (password == null || password.length < 1 || username == null || username.length < 1)
+   try
    {
-      res.status(400).send('username or password not provided.')
-      return
-   }
+      const { username, password } = req.body;
 
-   const saltQuery = {
-      text: "SELECT salt from users WHERE username=$1",
-      values: [username]
-   }
+      if (password == null || password.length < 1 || username == null || username.length < 1)
+      {
+         res.status(400).send('username or password not provided.')
+         return
+      }
 
-   client.query(saltQuery, (error, results) =>
-   {
-      if (error)
+      const saltQuery = {
+         text: "SELECT salt from users WHERE username=$1",
+         values: [username]
+      }
+
+      const salt = (await client.query(saltQuery))[0].salt
+      if (!salt)
       {
          res.status(500).send('User not found in the system.')
          return
       }
-      salt = results.rows[0].salt
-   })
 
-   const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
+      const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
 
-   const query = {
-      text: "SELECT id FROM users WHERE username=$1 AND password=$2",
-      values: [username, hash]
-   }
+      const query = {
+         text: "SELECT id FROM users WHERE username=$1 AND password=$2",
+         values: [username, hash]
+      }
 
-   client.query(query, async (error, results) =>
-   {
-      if (error)
+      const user = (await client.query(query))[0].id
+
+      if (!user)
       {
          res.status(400).send('Invalid Password.')
          return
       }
 
-      try
-      {
-         const token = await get_auth_code({ username: username })
-         console.log("Inside Jannas function: ", token)
-      } catch (e)
-      {
-         res.status(400).json(e)
-      }
+      const token = await get_auth_code({ username: username })
 
-      res.status(201).send('User Verified.')
-   })
+      res.status(201).header('auth_code', token).send('User Verified.')
+   } catch (e)
+   {
+      res.status(500).send('User login failed.')
+   }
 }
 
 
