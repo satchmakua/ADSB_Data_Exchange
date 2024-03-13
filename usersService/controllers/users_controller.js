@@ -193,7 +193,7 @@ deleteID = async (req, res) =>
       }
 
       const result = client.query(query)
-      if (!result) throw 'Error: Unable to delete user.'
+      if (!result) throw 'Error: Unable to delete user.' //need to check result
 
       res.status(200).json(
          {
@@ -239,7 +239,7 @@ putID = async (req, res) =>
          }
       ]
 
-      let results = null
+      let results = null //check results
       if (username && password)
       {
          results = await client.query(queries[0])
