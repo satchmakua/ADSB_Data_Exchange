@@ -17,7 +17,7 @@ CREATE TABLE auth
 CREATE TABLE oauth
 (
 	userId serial PRIMARY KEY, -- or other identifier
-	authCode text,
+	authCode text
 ) WITH (OIDS = FALSE);
 
 -- access postgres

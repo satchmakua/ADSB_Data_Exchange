@@ -1,10 +1,10 @@
 
 /* Import required libraries and modules */
 const express = require('express')
-const bodyParser = require('body-parser') 
+const bodyParser = require('body-parser')
 const path = require('path')
 require('dotenv').config
-({
+   ({
       override: true,
       path: path.join(__dirname, 'dev.env')
    })
@@ -27,7 +27,7 @@ require('dotenv').config
 // setTimeout(() => {  console.log('World!'); }, 2000);
 // console.log('client: ', client);
 
-const PORT = process.env.PORT || 3001 
+const PORT = process.env.PORT || 3001
 
 const app = express()
 app.use(bodyParser.json())
@@ -40,18 +40,30 @@ app.use(bodyParser.json())
 //      "Access-Control-Allow-Headers",
 //      "Origin, X-Requested-With,content-type, Accept , x-auth"
 //    )
- 
+
 //    next()
 //  })
 
-  /* User routes */
-const users = require('./routes/users') 
-app.use('/users', users)
+/* login/register URI */
+const user_config = require('./routes/users_login_route')
+app.use('/users', user_config)
+
+/* API calls to oauth service */
+const verify_users = require('./oauth/verify_route')
+app.use(verify_users)
+
+/* User routes */
+// Warning: verify_tokens applies to any other defined '/users' route from this point
+// If you need to create new URI's, define them before this point
+const users = require('./routes/users_route')
+const { verify_tokens } = require('./oauth/verify_tokens_middleware')
+app.use('/users', verify_tokens, users)
+
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) => 
 {
-   console.error('server error ',err.stack)
+   console.error('server error ', err.stack)
    res.status(500).send('Something went wrong!')
 })
 

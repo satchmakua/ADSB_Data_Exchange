@@ -8,7 +8,7 @@ async function verify_auth_code(user)
 {
    try
    {
-      const data = jwt.verify(user.access_code, process.env.JWT_SECRET)
+      const data = jwt.verify(user.auth_code, process.env.JWT_SECRET)
       return data
    } catch (e)
    {
