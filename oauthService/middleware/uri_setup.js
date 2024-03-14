@@ -56,8 +56,7 @@ async function setup_refresh_token(req, res, next)
 {
    try
    {
-      const body = R.pickAll([/*"refresh_token",*/ "username", "scope"], req.body)
-      //if (!body.refresh_token) throw "Error: refresh token is not found!"
+      const body = R.pickAll(["username", "scope"], req.body)
       if (!body.scope || !body.username) throw "Error: Header is missing user data!"
 
       const scope_time = verify_scope(body.scope)
@@ -77,9 +76,6 @@ async function setup_refresh_token(req, res, next)
 
 async function setup_verify(req, res, next)
 {
-   /* tokens will come from header */
-   //const body = { "auth_token": req.get("auth_token") }
-
    try
    {
       const body = R.pickAll(['auth_code', 'access_token', 'refresh_token'], req.body)
