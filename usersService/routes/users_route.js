@@ -2,27 +2,24 @@ const express = require('express')
 const router = express.Router()
 
 const {
-    postUsers,
-    isValidUser,
-    getUsers,
-    getID,
-    deleteID,
-    putID,
-    getConnect,
-    putDisconnect,
-    postDevices,
-    getDevices,
-    getUserDevices,
-    deleteUserDevices,
-    putUserDevices,
-    //getConnectUserDevices,
-    //putDisconnectUserDevices,
-    getAdsbUserDevices,
+   getUsers,
+   getID,
+   deleteID,
+   putID,
+   getConnect,
+   putDisconnect,
+   postDevices,
+   getDevices,
+   getUserDevices,
+   deleteUserDevices,
+   putUserDevices,
+   //getConnectUserDevices,
+   //putDisconnectUserDevices,
+   getAdsbUserDevices,
 } = require('../controllers/users_controller')
 
-router.post('/', postUsers)
 
-router.post('/validate', isValidUser)
+
 
 // router.get('?limit=<param>&start[< "l,g" + "e, ">]=<param>',
 // getUsers)
@@ -55,5 +52,8 @@ router.put('/:id/devices/:deviceid', putUserDevices)
 //router.put('/:id/devices/:id/disconnect', putDisconnectUserDevices)
 
 router.get('/:id/devices/:id/adsb?start=<param>&end=<param> ', getAdsbUserDevices)
+
+
+
 
 module.exports = router

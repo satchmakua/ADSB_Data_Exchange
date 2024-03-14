@@ -13,10 +13,6 @@ const {
    postRefresh,
    postVerifyToken,
 } = require('../controllers/oauth_controller')
-const {
-   postUserLogin,
-   postUserLogout
-} = require('../controllers/temp_login_logout')
 
 
 
@@ -25,12 +21,6 @@ router.post('/auth/auth_code', setup_auth_code, postAuthCode)
 router.post('/auth/login', setup_auth_token, postLogin)
 router.post('/auth/refresh', setup_refresh_token, postRefresh)
 router.post('/auth/verify', setup_verify, postVerifyToken)
-
-/* require search function */
-
-/* temp user login */
-router.post('/auth/temp_login', postUserLogin)
-router.post('/auth/temp_logout', postUserLogout)
 
 
 
