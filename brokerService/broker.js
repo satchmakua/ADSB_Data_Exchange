@@ -76,6 +76,73 @@ const adminQueueOut = new Writable(
     }
 )
 
+// Fully functional priority queue for user requests
+class PriorityQueue {
+    constructor() {
+        this.items = [];
+    }
+
+    enqueue(element, priority) {
+        let contain = false;
+        const queueElement = { element, priority };
+
+        for (let i = 0; i < this.items.length; i++) {
+            if (this.items[i].priority > queueElement.priority) {
+                this.items.splice(i, 0, queueElement);
+                contain = true;
+                break;
+            }
+        }
+
+        if (!contain) {
+            this.items.push(queueElement);
+        }
+    }
+
+    dequeue() {
+        if (this.isEmpty()) return null;
+        return this.items.shift();
+    }
+
+    isEmpty() {
+        return this.items.length === 0;
+    }
+
+    size() {
+        return this.items.length;
+    }
+}
+
+const userRequestQueue = new PriorityQueue();
+
+// Function to handle incoming WebSocket messages and enqueue them with priority
+function handleIncomingRequest(userId, requestData, priority) {
+    userRequestQueue.enqueue({userId: userId, requestData: requestData}, priority);
+}
+
+// Function to process user requests and send data via WebSocket
+function processUserRequest() {
+    while (!userRequestQueue.isEmpty()) {
+        const request = userRequestQueue.dequeue();
+        const userId = request.element.userId;
+        const requestData = request.element.requestData;
+        // Assuming userSockets is a map of userId to WebSocket connections
+        if (userSockets.has(userId)) {
+            const ws = userSockets.get(userId);
+            // Simulate processing the requestData to retrieve relevant ADS-B data
+            const responseData = `Processed data for request: ${requestData}`;
+            ws.send(JSON.stringify({data: responseData}));
+        }
+    }
+}
+
+// Example usage - simulate incoming requests
+// This part would typically be triggered by WebSocket 'message' events
+// handleIncomingRequest(1, 'latest ADS-B data', 1);
+
+// Periodically process requests from the queue
+setInterval(processUserRequest, 1000); // Process requests every second
+
 adminQueue.pipe(adminQueueOut)
 
 // Handle groundstation websocket connections
