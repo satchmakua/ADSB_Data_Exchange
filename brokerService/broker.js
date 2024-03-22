@@ -249,8 +249,8 @@ usersSocketServ.on('connection', function connection(userws)
 
 app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
 {
-    const userId = parseInt(req.params.id)
-    const deviceId = parseInt(req.params.id)
+    const userId = parseInt(req.params.id);
+    const deviceId = parseInt(req.params.deviceid);
     //console.log('groundStationSocket keys', groundStationSockets.keys())
     //console.log('userSockey keys', userSockets.keys())
 
