@@ -148,6 +148,14 @@ adminQueue.pipe(adminQueueOut)
 // Handle groundstation websocket connections
 stationSocketServ.on('connection', function connection(ws)
 {
+    ws.on('message', function incoming(message) {
+    let data = JSON.parse(message)
+    if (data.type == "init") {
+        console.log(`Ground station init signal received with ID: ${data.stationID}`)
+        groundStationSockets.set(data.stationID, ws)
+        console.log(`Ground station socket mapped: ${groundStationSockets.has(data.stationID)}`)
+    }
+
     let stationID = 0
 
     ws.on('close', () =>
@@ -185,19 +193,23 @@ stationSocketServ.on('connection', function connection(ws)
                         ws.send(JSON.stringify(data))
                         //console.log(`sent data to client ${userId}`)
                     } 
-                });
+                })
             }
             
             adminQueue.push(data)
 
+            console.log(`Attempting to insert message data for deviceId: ${data.deviceId}`)
+
             db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
                 .then(() =>
                 {
-                    console.log('Message successfully inserted into database')
+                    console.log(`[Success] Message data inserted into database for deviceId: ${deviceId}`)
+
                 })
                 .catch(err =>
                 {
-                    console.error('Error inserting message into database:', err)
+                    console.error(`[Database Error] Failed inserting message into database for deviceId: ${deviceId}:`, err)
+
                 })
         }
 
@@ -206,7 +218,7 @@ stationSocketServ.on('connection', function connection(ws)
 
 usersSocketServ.on('connection', function connection(userws)
 {
-    console.log('connection!!!!!')
+    console.log('User WebSocket connection established')
     userws.on('message', function incoming(message) 
     {
         let data = JSON.parse(message)
@@ -249,23 +261,25 @@ usersSocketServ.on('connection', function connection(userws)
 
 app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
 {
-    const userId = parseInt(req.params.id);
-    const deviceId = parseInt(req.params.deviceid);
+    console.log(`Initiating stream for userId: ${req.params.id}, deviceId: ${req.params.deviceid}`)
+    const userId = parseInt(req.params.id)
+    const deviceId = parseInt(req.params.deviceid)
     //console.log('groundStationSocket keys', groundStationSockets.keys())
     //console.log('userSockey keys', userSockets.keys())
 
     if (!groundStationSockets.has(deviceId))
     {
         res.status(500).send(`Broker does not have an active connection with groundStation with ID ${deviceId}`)
-        console.log('groundStation Socket Not Found')
+        console.log(`[Error] No active ground station connection for device ID: ${deviceId}`)
         return
     }
     if (!userSockets.has(userId))
     {
         res.status(400).send('Websocket has not been created yet. Please make websocket request')
-        console.log('client websocket not found')
+        console.log(`[Error] No active WebSocket connection for user ID: ${userId}`)
         return
     }
+
     //console.log('activeUserRequests ', activeUserRequests.keys())
     // add userId to deviceId stream to Queue
     if (!activeUserRequests.get(deviceId)) {
