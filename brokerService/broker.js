@@ -84,11 +84,11 @@ class PriorityQueue {
 
     enqueue(element, priority) {
         let contain = false
-        const queueElement = { element, priority };
+        const queueElement = { element, priority }
 
         for (let i = 0; i < this.items.length; i++) {
             if (this.items[i].priority > queueElement.priority) {
-                this.items.splice(i, 0, queueElement);
+                this.items.splice(i, 0, queueElement)
                 contain = true
                 break
             }
@@ -128,7 +128,7 @@ function processUserRequest() {
         const requestData = request.element.requestData
         // Assuming userSockets is a map of userId to WebSocket connections
         if (userSockets.has(userId)) {
-            const ws = userSockets.get(userId);
+            const ws = userSockets.get(userId)
             // Simulate processing the requestData to retrieve relevant ADS-B data
             const responseData = `Processed data for request: ${requestData}`
             ws.send(JSON.stringify({data: responseData}))
