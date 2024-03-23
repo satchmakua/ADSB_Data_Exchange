@@ -42,4 +42,3 @@ setTimeout(async function streamData() { // wait for websocket connection to be 
   }
 }, 2000);
 
-
