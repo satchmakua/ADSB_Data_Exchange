@@ -148,14 +148,6 @@ adminQueue.pipe(adminQueueOut)
 // Handle groundstation websocket connections
 stationSocketServ.on('connection', function connection(ws)
 {
-    ws.on('message', function incoming(message) {
-    let data = JSON.parse(message)
-    if (data.type == "init") {
-        console.log(`Ground station init signal received with ID: ${data.stationID}`)
-        groundStationSockets.set(data.stationID, ws)
-        console.log(`Ground station socket mapped: ${groundStationSockets.has(data.stationID)}`)
-    }
-
     let stationID = 0
 
     ws.on('close', () =>
@@ -171,11 +163,11 @@ stationSocketServ.on('connection', function connection(ws)
 
         if (data.type == "init")
         {
-            console.log("Socket init signal received")
+            console.log(`Ground station init signal received with ID: ${data.stationID}`)
             stationID = data.stationID
             console.log('stationID ', stationID)
             groundStationSockets.set(stationID, ws)
-            console.log("Station socket mapped: " + groundStationSockets.has(stationID))
+            console.log(`Ground station socket mapped: ${groundStationSockets.has(data.stationID)}`)
         }
         else
         {
@@ -218,7 +210,7 @@ stationSocketServ.on('connection', function connection(ws)
 
 usersSocketServ.on('connection', function connection(userws)
 {
-    console.log('User WebSocket connection established')
+    console.log('User WebSocket connection established.')
     userws.on('message', function incoming(message) 
     {
         let data = JSON.parse(message)
