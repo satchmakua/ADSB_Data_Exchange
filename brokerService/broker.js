@@ -208,36 +208,37 @@ stationSocketServ.on('connection', function connection(ws)
     })
 })
 
-usersSocketServ.on('connection', function connection(userws)
-{
+usersSocketServ.on('connection', function connection(userws) {
     console.log('User WebSocket connection established.')
-    userws.on('message', function incoming(message) 
-    {
-        let data = JSON.parse(message)
+    let userId;
 
-        if (data.type == "init")
-        {
+    userws.on('message', function incoming(message) {
+        let data = JSON.parse(message);
+
+        if (data.type == "init") {
             console.log("Client init signal received")
-            userId = data.userId
-            if (userId == undefined)
-            {
+            userId = data.userId;
+            if (userId === undefined) {
                 console.log('userId is undefined')
-                this.close()
-                return
+                this.close();
+                return;
             }
             console.log('userId ', userId)
             userSockets.set(userId, userws)
             console.log("Station socket mapped: " + userSockets.has(userId))
+        } else {
+            handleIncomingRequest(userId, data, 1);
         }
-    })
+    });
 
-    userws.on('close', () =>
-    {   
+    userws.on('close', () => {
         console.log("User socket closed signal")
-        userSockets.delete(userId) // or should this be userSockets.delete(usersws) ??
-    })
+        if (userId !== undefined) {
+            userSockets.delete(userId); 
+        }
+    });
+});
 
-})
 
 // Authentication should happen in users controller when the client is making a socket connection request
 // that call will then make an internal call back to the broker to hand back a socket connection.
