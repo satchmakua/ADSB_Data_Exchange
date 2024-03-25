@@ -76,6 +76,69 @@ const adminQueueOut = new Writable(
     }
 )
 
+// Fully functional priority queue for user requests
+class PriorityQueue {
+    constructor() {
+        this.items = []
+    }
+
+    enqueue(element, priority) {
+        let contain = false
+        const queueElement = { element, priority }
+
+        for (let i = 0; i < this.items.length; i++) {
+            if (this.items[i].priority > queueElement.priority) {
+                this.items.splice(i, 0, queueElement)
+                contain = true
+                break
+            }
+        }
+
+        if (!contain) {
+            this.items.push(queueElement)
+        }
+    }
+
+    dequeue() {
+        if (this.isEmpty()) return null
+        return this.items.shift()
+    }
+
+    isEmpty() {
+        return this.items.length === 0
+    }
+
+    size() {
+        return this.items.length
+    }
+}
+
+const userRequestQueue = new PriorityQueue()
+
+// Function to handle incoming WebSocket messages and enqueue them with priority
+function handleIncomingRequest(userId, requestData, priority) {
+    userRequestQueue.enqueue({userId: userId, requestData: requestData}, priority)
+}
+
+// Function to process user requests and send data via WebSocket
+function processUserRequest() {
+    while (!userRequestQueue.isEmpty()) {
+        const request = userRequestQueue.dequeue()
+        const userId = request.element.userId
+        const requestData = request.element.requestData
+        // Assuming userSockets is a map of userId to WebSocket connections
+        if (userSockets.has(userId)) {
+            const ws = userSockets.get(userId)
+            // Simulate processing the requestData to retrieve relevant ADS-B data
+            const responseData = `Processed data for request: ${requestData}`
+            ws.send(JSON.stringify({data: responseData}))
+        }
+    }
+}
+
+// Periodically process requests from the queue
+setInterval(processUserRequest, 1000) // Process requests every second
+
 adminQueue.pipe(adminQueueOut)
 
 // Handle groundstation websocket connections
@@ -96,11 +159,11 @@ stationSocketServ.on('connection', function connection(ws)
 
         if (data.type == "init")
         {
-            console.log("Socket init signal received")
+            console.log(`Ground station init signal received with ID: ${data.stationID}`)
             stationID = data.stationID
             console.log('stationID ', stationID)
             groundStationSockets.set(stationID, ws)
-            console.log("Station socket mapped: " + groundStationSockets.has(stationID))
+            console.log(`Ground station socket mapped: ${groundStationSockets.has(data.stationID)}`)
         }
         else
         {
@@ -118,55 +181,59 @@ stationSocketServ.on('connection', function connection(ws)
                         ws.send(JSON.stringify(data))
                         //console.log(`sent data to client ${userId}`)
                     } 
-                });
+                })
             }
             
             adminQueue.push(data)
 
+            console.log(`Attempting to insert message data for deviceId: ${data.deviceId}`)
+
             db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
                 .then(() =>
                 {
-                    console.log('Message successfully inserted into database')
+                    console.log(`[Success] Message data inserted into database for deviceId: ${deviceId}`)
+
                 })
                 .catch(err =>
                 {
-                    console.error('Error inserting message into database:', err)
+                    console.error(`[Database Error] Failed inserting message into database for deviceId: ${deviceId}:`, err)
+
                 })
         }
 
     })
 })
 
-usersSocketServ.on('connection', function connection(userws)
-{
-    console.log('connection!!!!!')
-    userws.on('message', function incoming(message) 
-    {
-        let data = JSON.parse(message)
+usersSocketServ.on('connection', function connection(userws) {
+    console.log('User WebSocket connection established.')
+    let userId;
 
-        if (data.type == "init")
-        {
+    userws.on('message', function incoming(message) {
+        let data = JSON.parse(message);
+
+        if (data.type == "init") {
             console.log("Client init signal received")
-            userId = data.userId
-            if (userId == undefined)
-            {
+            userId = data.userId;
+            if (userId === undefined) {
                 console.log('userId is undefined')
-                this.close()
-                return
+                this.close();
+                return;
             }
             console.log('userId ', userId)
             userSockets.set(userId, userws)
             console.log("Station socket mapped: " + userSockets.has(userId))
+        } else {
+            handleIncomingRequest(userId, data, 1);
         }
-    })
-
-    userws.on('close', () =>
-    {   
+    });
+    userws.on('close', () => {
         console.log("User socket closed signal")
-        userSockets.delete(userId) // or should this be userSockets.delete(usersws) ??
-    })
+        if (userId !== undefined) {
+            userSockets.delete(userId); 
+        }
+    });
+});
 
-})
 
 // Authentication should happen in users controller when the client is making a socket connection request
 // that call will then make an internal call back to the broker to hand back a socket connection.
@@ -182,23 +249,25 @@ usersSocketServ.on('connection', function connection(userws)
 
 app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
 {
+    console.log(`Initiating stream for userId: ${req.params.id}, deviceId: ${req.params.deviceid}`)
     const userId = parseInt(req.params.id)
-    const deviceId = parseInt(req.params.id)
+    const deviceId = parseInt(req.params.deviceid)
     //console.log('groundStationSocket keys', groundStationSockets.keys())
     //console.log('userSockey keys', userSockets.keys())
 
     if (!groundStationSockets.has(deviceId))
     {
         res.status(500).send(`Broker does not have an active connection with groundStation with ID ${deviceId}`)
-        console.log('groundStation Socket Not Found')
+        console.log(`[Error] No active ground station connection for device ID: ${deviceId}`)
         return
     }
     if (!userSockets.has(userId))
     {
         res.status(400).send('Websocket has not been created yet. Please make websocket request')
-        console.log('client websocket not found')
+        console.log(`[Error] No active WebSocket connection for user ID: ${userId}`)
         return
     }
+
     //console.log('activeUserRequests ', activeUserRequests.keys())
     // add userId to deviceId stream to Queue
     if (!activeUserRequests.get(deviceId)) {
