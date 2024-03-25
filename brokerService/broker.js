@@ -136,10 +136,6 @@ function processUserRequest() {
     }
 }
 
-// Example usage - simulate incoming requests
-// This part would typically be triggered by WebSocket 'message' events
-// handleIncomingRequest(1, 'latest ADS-B data', 1)
-
 // Periodically process requests from the queue
 setInterval(processUserRequest, 1000) // Process requests every second
 
@@ -230,7 +226,6 @@ usersSocketServ.on('connection', function connection(userws) {
             handleIncomingRequest(userId, data, 1);
         }
     });
-
     userws.on('close', () => {
         console.log("User socket closed signal")
         if (userId !== undefined) {
