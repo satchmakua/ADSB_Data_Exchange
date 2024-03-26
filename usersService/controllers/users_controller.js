@@ -13,25 +13,6 @@ const client = require('../database/db.js')
 //const { use } = require('../oauth/verify_route.js')
 
 
-
-
-standardReturn = (res, error, results, errCode, customErrStr) =>
-{
-   if (error)
-   {
-      const code = errCode ?? 500
-      if (customErrStr)
-      {
-         res.status(code).send(customErrStr)
-      } else
-      {
-         res.status(code).send(`Error: ${error}`)
-      }
-      return
-   }
-   res.status(200).send(results.rows)
-}
-
 // post '/users'
 // create user
 postUsers = async (req, res) =>
@@ -146,7 +127,7 @@ getUsers = async (req, res) =>
 {
    try
    {
-      const users = (await client.query('SELECT * FROM users ORDER BY id ASC'))
+      const users = (await client.query('SELECT username FROM users ORDER BY id ASC'))
       if (!users) throw "Error: Users could not be retrieved!"
 
       res.status(200).json(users)
@@ -165,7 +146,7 @@ getID = async (req, res) =>
    {
       const id = parseInt(req.params.id)
       const query = {
-         text: 'SELECT * FROM users WHERE id = $1',
+         text: 'SELECT username FROM users WHERE id = $1',
          values: [id]
       }
 
@@ -195,11 +176,7 @@ deleteID = async (req, res) =>
       const result = client.query(query)
       if (!result) throw 'Error: Unable to delete user.' //need to check result
 
-      res.status(200).json(
-         {
-            code: 200,
-            message: "User deleted!"
-         })
+      res.status(200).send(`user ${id} deleted.`)
    } catch (e)
    {
       res.status(500).send('Error: Unable to delete user.')
@@ -255,7 +232,7 @@ putID = async (req, res) =>
          return
       }
 
-      res.status(200).send(results)
+      res.status(200).send(`user ${id} updated.`)
    } catch (e)
    {
       res.status(500).send('Error: Unable to update user.')
@@ -295,7 +272,7 @@ getDevices = async (req, res) =>
    {
       const id = parseInt(req.params.id)
       const query = {
-         text: 'SELECT * FROM groundstations WHERE user_id = $1',
+         text: 'SELECT mac_address, latitude, longitude FROM groundstations WHERE user_id = $1',
          values: [id]
       }
       const results = await client.query(query)
@@ -316,7 +293,7 @@ getUserDevices = async (req, res) =>
       const id = parseInt(req.params.id)
       const deviceid = parseInt(req.params.deviceid)
       const query = {
-         text: 'SELECT * FROM groundstations WHERE user_id = $1 AND id = $2',
+         text: 'SELECT mac_address, latitude, longitude FROM groundstations WHERE user_id = $1 AND id = $2',
          values: [id, deviceid]
       }
       const results = await client.query(query)
@@ -342,10 +319,10 @@ deleteUserDevices = async (req, res) =>
       }
       const results = await client.query(query)
 
-      res.status(200).send(results)
+      res.status(200).send(`device ${deviceid} deleted.`)
    } catch (e)
    {
-      res.status(500).send('Error: Unable to .')
+      res.status(500).send(`Error: Unable to delete device ${deviceid}.`)
    }
 }
 
@@ -387,7 +364,7 @@ putUserDevices = async (req, res) =>
          return
       }
 
-      res.status(200).send(results)
+      res.status(200).send(`device ${deviceid} updated.`)
    } catch (e)
    {
       res.status(500).send('Error: Unable to update device.')

@@ -123,15 +123,15 @@ stationSocketServ.on('connection', function connection(ws)
             
             adminQueue.push(data)
 
-            db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
-                .then(() =>
-                {
-                    console.log('Message successfully inserted into database')
-                })
-                .catch(err =>
-                {
-                    console.error('Error inserting message into database:', err)
-                })
+            // db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
+            //     .then(() =>
+            //     {
+            //         console.log('Message successfully inserted into database')
+            //     })
+            //     .catch(err =>
+            //     {
+            //         console.error('Error inserting message into database:', err)
+            //     })
         }
 
     })
