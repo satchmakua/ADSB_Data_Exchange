@@ -180,15 +180,6 @@ usersSocketServ.on('connection', function connection(userws)
 //     }
 // })
 
-// Forward API call to the appropriate service
-// It is each services responsibility to ensure that oAuth middleware is applied if required for any URI's.
-app.all("/users/*", proxy(user))
-app.all("/auth/*", proxy(auth))
-
-/* API calls to oauth service */
-// const verify_users = require('./oauth/verify_route')
-// app.use(verify_users)
-
 app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
 {
     const userId = parseInt(req.params.id)
@@ -220,6 +211,11 @@ app.post("/users/:id/devices/:deviceid/stream", (req, res) =>
         activeUserRequests.set(deviceId, activeRequests)
     }
 })
+
+// Forward API call to the appropriate service
+// It is each services responsibility to ensure that oAuth middleware is applied if required for any URI's.
+app.all("/users/*", proxy(user))
+app.all("/auth/*", proxy(auth))
 
 // GET route to fetch messages from the database
 app.get('/message', async (req, res) =>
