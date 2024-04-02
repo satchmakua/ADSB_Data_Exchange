@@ -35,9 +35,9 @@ postUsers = async (req, res) =>
       };
 
       const results = await client.query(query)
-      const token = await get_auth_code({ username }) // dont need token here only create when login?
+      //const token = await get_auth_code({ username }) // dont need token here only create when login?
 
-      res.status(201).header("auth_code", token).send(`User added with ID: ${results[0].id}`)
+      res.status(201)/*.header("auth_code", token)*/.send(`User added with ID: ${results[0].id}`)
    } catch (e)
    {
       res.status(500).send('Error: User registration failed.')
