@@ -123,15 +123,15 @@ stationSocketServ.on('connection', function connection(ws)
             
             adminQueue.push(data)
 
-            db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
-                .then(() =>
-                {
-                    console.log('Message successfully inserted into database')
-                })
-                .catch(err =>
-                {
-                    console.error('Error inserting message into database:', err)
-                })
+            // db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
+            //     .then(() =>
+            //     {
+            //         console.log('Message successfully inserted into database')
+            //     })
+            //     .catch(err =>
+            //     {
+            //         console.error('Error inserting message into database:', err)
+            //     })
         }
 
     })
@@ -215,6 +215,7 @@ app.post("/users/:id/devices/:deviceid/stream", verify_tokens, (req, res) =>
 })
 
 // Forward API call to the appropriate service
+// It is each services responsibility to ensure that oAuth middleware is applied if required for any URI's.
 app.all("/users/*", proxy(user))
 app.all("/auth/*", proxy(auth))
 
