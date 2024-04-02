@@ -15,7 +15,7 @@ async function getAccessCode() {
            username: 'username',
            password: 'password'
        });
-       return response.data.auth_code;
+       return response.data.auth_code; // auth_code is actually send in the header
    } catch (error) {
        console.error('Error fetching access code:', error.message);
        throw error;
@@ -36,13 +36,13 @@ async function getAuthorizationToken(authCode) {
            "scope":"admin"
          }
        });
-       return response.data; // contains access_token, refresh_token
+       return response.data; // change because these are pulled from the header. contains access_token, refresh_token
    } catch (error) {
        console.error('Error fetching authorization token:', error.message);
        throw error;
    }
 }
-
+// below functions are to successfully login and get oAuth token.
 const auth_code = await getAccessCode();
 const tokens = await getAuthorizationToken(auth_code);
 
