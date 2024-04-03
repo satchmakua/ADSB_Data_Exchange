@@ -33,14 +33,14 @@ postUsers = async (req, res) =>
          text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
          values: [username, hash, salt]
       };
-
+// add code that checks if user already exists!
       const results = await client.query(query)
       //const token = await get_auth_code({ username }) // dont need token here only create when login?
 
       res.status(201)/*.header("auth_code", token)*/.send(`User added with ID: ${results[0].id}`)
    } catch (e)
    {
-      res.status(500).send('Error: User registration failed.')
+      res.status(500).send(`Error: User registration failed. ${e}`)
    }
    // const { username, password } = req.body
 
