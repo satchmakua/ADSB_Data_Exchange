@@ -64,11 +64,11 @@ async function main() {
       socket.on('message', (data) => {
          console.log('Received message from server:', JSON.parse(data))
       })
-
+      
       socket.on('close', () => {
          console.log('WebSocket connection closed.')
       })
-
+      
       socket.on('error', (error) => {
          console.error('WebSocket error:', error.message)
       })
@@ -77,9 +77,8 @@ async function main() {
          try {
             const response = await axios.post(`http://35.87.79.158:80/users/${userId}/devices/${deviceId}/stream`, {
                headers: {
-                  auth_code: auth_code,
-                  access_token: access_token,
-                  refresh_token: refresh_token
+                  "access_token": access_token,
+                  "refresh_token": refresh_token
                }
                })
             console.log(`Received data: ${JSON.stringify(response.data)}`)
@@ -90,6 +89,7 @@ async function main() {
 
 } catch (error) {
    console.error('Error:', error);
+   throw error;
 }
 }
 
