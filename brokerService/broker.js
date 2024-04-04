@@ -247,7 +247,9 @@ usersSocketServ.on('connection', function connection(userws) {
 //     }
 // })
 
-app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
+const { verify_tokens } = require('./oauth/verify_tokens_middleware')
+// is app.use().post() valid??
+app.use(verify_tokens).post("/users/:id/devices/:deviceid/stream", (req, res) => 
 {
     console.log(`Initiating stream for userId: ${req.params.id}, deviceId: ${req.params.deviceid}`)
     const userId = parseInt(req.params.id)
