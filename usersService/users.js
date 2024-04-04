@@ -57,8 +57,7 @@ app.use(verify_users)
 // If you need to create new URI's, define them before this point
 const users = require('./routes/users_route')
 const { verify_tokens } = require('./oauth/verify_tokens_middleware')
-app.use('/users', verify_tokens, users)
-
+app.use('/users', /*verify_tokens,*/ users)
 
 // Error handling middleware for server errors
 app.use((err, req, res, next) => 
