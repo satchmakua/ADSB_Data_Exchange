@@ -27,13 +27,11 @@ async function getAccessCode() {
 async function getAuthorizationToken(authCode) {
    try {
        const response = await axios.post('http://35.87.79.158:80/users/tokens/login', {
-         header:
+         "scope": "admin"
+      }, {
+         headers:
          {
            "auth_code": authCode
-         },
-         body:
-         {
-           "scope":"admin"
          }
        });
        return (response.headers.access_token, response.headers.refresh_token);
