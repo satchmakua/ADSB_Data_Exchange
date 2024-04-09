@@ -1,6 +1,7 @@
 // Broker Component - ADS-B Restful Data Exchange
 
 // Import required libraries and modules
+const { exec, ChildProcess, execFile, spawn } = require('node:child_process')
 const express = require('express')
 const proxy = require('express-http-proxy')
 const http = require('http')
@@ -9,6 +10,7 @@ const pgp = require('pg-promise')() // PostgreSQL database library
 const cors = require('cors') // Cross-Origin Resource Sharing middleware
 const { Readable, Writable } = require('stream') // Needed for message queues
 const WebSocket = require('ws') // WebSocket setup for ADS-B
+var kill = require('tree-kill')
 
 // need to put locks on these!!
 const groundStationSockets = new Map()
@@ -16,6 +18,7 @@ const userSockets = new Map()
 const activeUserRequests = new Map()
 
 const path = require('path')
+const { stdout } = require('node:process')
 require('dotenv').config({
     override: true,
     path: path.join(__dirname, '../dev.env')
@@ -92,7 +95,7 @@ stationSocketServ.on('connection', function connection(ws)
     ws.on('message', function incoming(message) 
     {
         let data = JSON.parse(message)
-        //console.log('Received message:', data)
+        console.log('Received message:', data)
 
         if (data.type == "init")
         {
@@ -109,18 +112,21 @@ stationSocketServ.on('connection', function connection(ws)
             // create route to get userID from stationID
 
             const activeRequests = activeUserRequests.get(data.groundStationID)
-            if (activeRequests) {
+            if (activeRequests)
+            {
 
-                userSockets.forEach((ws, userId) => {
+                userSockets.forEach((ws, userId) =>
+                {
                     // Do something with each WebSocket and its associated key (userId)
                     //console.log(`WebSocket for user ${userId}:`, ws);
-                    if (activeRequests.includes(userId)) {
+                    if (activeRequests.includes(userId))
+                    {
                         ws.send(JSON.stringify(data))
                         //console.log(`sent data to client ${userId}`)
-                    } 
+                    }
                 });
             }
-            
+
             adminQueue.push(data)
 
             // db.none('INSERT INTO adsb_messages(message_data, timestamp) VALUES($1, NOW())', [data])
@@ -139,7 +145,12 @@ stationSocketServ.on('connection', function connection(ws)
 
 usersSocketServ.on('connection', function connection(userws)
 {
+    let startSim = 'node ../ads-b-simulator/app.js 1 10 false'
+
     console.log('connection!!!!!')
+
+    let sim = spawn(startSim, { cwd: '../ads-b-simulator', shell: true, killSignal: 'SIGINT' })
+
     userws.on('message', function incoming(message) 
     {
         let data = JSON.parse(message)
@@ -161,9 +172,10 @@ usersSocketServ.on('connection', function connection(userws)
     })
 
     userws.on('close', () =>
-    {   
+    {
         console.log("User socket closed signal")
         userSockets.delete(userId) // or should this be userSockets.delete(usersws) ??
+        kill(sim.pid, 'SIGTERM')
     })
 
 })
@@ -203,10 +215,12 @@ app.post("/users/:id/devices/:deviceid/stream", verify_tokens, (req, res) =>
     }
     //console.log('activeUserRequests ', activeUserRequests.keys())
     // add userId to deviceId stream to Queue
-    if (!activeUserRequests.get(deviceId)) {
+    if (!activeUserRequests.get(deviceId))
+    {
         //console.log('no active requests')
         activeUserRequests.set(deviceId, [userId])
-    } else {
+    } else
+    {
         //console.log('adding value to active requerstss')
         let activeRequests = activeUserRequests.get(deviceId)
         activeRequests.add(userId)
