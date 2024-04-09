@@ -1,75 +1,104 @@
-const WebSocket = require('ws');
-const axios = require('axios');
+const WebSocket = require('ws')
+const axios = require('axios')
 
-const BASE_URL = 'http://localhost:3002'; // Adjusted to use your OAuth service's local address
-const userId = parseInt(process.argv[2]);
-const deviceId = parseInt(process.argv[3]);
-
-if (isNaN(userId) || isNaN(deviceId)) {
-    console.error('Usage: node ws_client.js <userId> <deviceId>');
-    process.exit(1);
+const userId = parseInt(process.argv[3])
+const deviceId = parseInt(process.argv[4])
+if (process.argv[2] != 'websocket' || !userId || !deviceId)
+{
+   console.error('Usage: node ws_client.js websocket <userId> <deviceId>')
+   process.exit(1)
 }
 
 async function getAccessCode() {
-    try {
-        const response = await axios.post(`${BASE_URL}/auth/login`, {
-            username: 'admin1',
-            password: 'password',
-        });
-        // Using correct property access according to the expected response format.
-        return response.data.token; // Adjusted based on the typical response structure for login.
-    } catch (error) {
-        console.error('Error fetching access code:', error.message);
-        throw error;
-    }
+   try {
+       const response = (await axios.post('http://localhost:3000/users/validate', {
+           username: 'admin1',
+           password: 'password'
+       })).headers;
+       return response.auth_code;
+   } catch (error) {
+       console.error('Error fetching access code:', error.message);
+       throw error;
+   }
 }
 
+// user calls tokens/login when logging in, when they receive a response that refresh is needed then
+// user needs to call tokens/refresh
 async function getAuthorizationToken(authCode) {
-    try {
-        // Assuming this endpoint correctly exchanges an auth code for tokens.
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-            auth_code: authCode,
-        }, {
-            headers: {
-                Authorization: `Bearer ${authCode}`, // Assuming auth code is used here directly for simplicity.
-            }
-        });
-        return { accessToken: response.data.access_token, refreshToken: response.data.refresh_token };
-    } catch (error) {
-        console.error('Error fetching authorization token:', error.message);
-        throw error;
-    }
+   try {
+       const response = (await axios.post('http://127.0.0.1:3000/users/tokens/login', 
+       {
+         "scope": "admin"
+       },{
+          headers:
+         {
+           "auth_code": authCode
+         }
+      })).headers;
+
+       return {
+         access_token:response.access_token, 
+         refresh_token:response.refresh_token
+      };
+   } catch (error) {
+       console.error('Error fetching authorization token:', error.message);
+       throw error;
+   }
 }
+
+ const socket = new WebSocket(`http://localhost:3003/${userId}`)
+ socket.on('open', () => {
+   socket.send(JSON.stringify(
+      {
+         type: 'init',
+         userId: userId
+      }))
+
+   console.log('WebSocket connection opened.')
+})
+socket.on('message', (data) => {
+   console.log('Received message from server:', JSON.parse(data))
+})
+      
+socket.on('close', () => {
+   console.log('WebSocket connection closed.')
+})
+      
+socket.on('error', (error) => {
+   console.error('WebSocket error:', error.message)
+})
 
 async function main() {
-    try {
-        const { accessToken, refreshToken } = await getAuthorizationToken(await getAccessCode());
+   try {
+      // below functions are to successfully login and get oAuth token.
+      const auth_code = await getAccessCode()
+      console.log("code:",auth_code)
+      const {access_token, refresh_token} = await getAuthorizationToken(auth_code)
+     
+      console.log("access:",access_token)
+      console.log("refresh:",refresh_token)
+     
 
-        // Establish WebSocket connection
-        const socket = new WebSocket(`ws://localhost/ws/${userId}`); // Assuming WebSocket service runs on the main host
+      setTimeout(async function streamData() { // wait for websocket connection to be set-up
+         try {
+            const response = await axios.post(`http://localhost:3000/users/${userId}/devices/${deviceId}/stream`, {}, {
+               headers: {
+                  "access_token": access_token,
+                  "refresh_token":  refresh_token
+               }
+               })
+            console.log(`Received data: ${JSON.stringify(response.data)}`)
+      } catch (error) {
+         console.log(error)
+            console.log(`Error ${error.code}: ${error.message}`)
+      }
+      }, 2000);
 
-        socket.on('open', () => {
-            console.log('WebSocket connection opened.');
-            socket.send(JSON.stringify({ type: 'init', userId }));
-        });
-
-        socket.on('message', (data) => {
-            console.log('Received message from server:', data);
-        });
-
-        socket.on('close', () => {
-            console.log('WebSocket connection closed.');
-        });
-
-        socket.on('error', (error) => {
-            console.error('WebSocket error:', error.message);
-        });
-
-        // Demonstrate using accessToken for a protected endpoint if necessary
-        // This part depends on your application's requirements
-    } catch (error) {
-        console.error('Error:', error.message);
-    }
+} catch (error) {
+   console.error('Error:', error);
+   throw error;
+}
 }
 
 main();
+
