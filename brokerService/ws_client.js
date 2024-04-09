@@ -46,7 +46,7 @@ async function getAuthorizationToken(authCode) {
    }
 }
 
- const socket = new WebSocket(`http://localhost:3003/${userId}`)
+ const socket = new WebSocket(`ws://localhost:3003/${userId}`)
  socket.on('open', () => {
    socket.send(JSON.stringify(
       {
