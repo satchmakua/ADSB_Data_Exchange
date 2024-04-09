@@ -24,6 +24,7 @@
     "pg-promise": "^11.5.4",
     "prettier": "^2.8.8",
     "ramda": "^0.29.1",
+    "tree-kill": "^1.2.2",
     "ws": "^8.14.2"
   },
   "devDependencies": {
