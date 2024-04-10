@@ -192,16 +192,12 @@ usersSocketServ.on('connection', function connection(userws)
 //     }
 // })
 
-
-
-/* API calls to oauth service */
-// const verify_users = require('./oauth/verify_route')
-// app.use(verify_users)
-
-app.post("/users/:id/devices/:deviceid/stream", (req, res) => 
+const { verify_tokens } = require('../usersService/oauth/verify_tokens_middleware')
+// is app.use().post() valid??
+app.post("/users/:id/devices/:deviceid/stream", verify_tokens, (req, res) => 
 {
     const userId = parseInt(req.params.id)
-    const deviceId = parseInt(req.params.id)
+    const deviceId = parseInt(req.params.deviceid)
     //console.log('groundStationSocket keys', groundStationSockets.keys())
     //console.log('userSockey keys', userSockets.keys())
 
