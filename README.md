@@ -48,3 +48,29 @@ Testing the System
 Additional Functionalities
 
 - URI Calls: The system supports various operations through specific URIs for user and device management, authentication, and ADSB message streaming. Refer to the "NewURIs-ExternalInternal.docx" for a comprehensive list of available endpoints and their purposes.
+
+Ubuntu EC2 Instance Database Setup
+
+Install postgresql:  sudo apt-get install postgresql
+
+Launch psql: psql
+
+Create database: CREATE DATABASE database;
+                 CREATE TABLE users
+                 (
+                    id serial PRIMARY KEY,
+                    username text UNIQUE,
+                    password text,
+                    salt text
+                 ) WITH (OIDS = FALSE);
+                 CREATE TABLE groundstations
+                 (
+                    id serial PRIMARY KEY,
+                    user_id int,
+                    mac_address text UNIQUE,
+                    latitude int,
+                    longitude int,
+                    FOREIGN KEY(user_id) REFERENCES users(id)
+                 ) WITH (OIDS = FALSE);
+
+If issues with user permissions: sudo -u postgres psqlCREATE ROLE 'username' WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD 'password';
