@@ -1,5 +1,6 @@
 
 /* Import required libraries and modules */
+// TODO: add code to connect to database and ensure connection is valid
 const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
@@ -9,40 +10,10 @@ require('dotenv').config
       path: path.join(__dirname, 'dev.env')
    })
 
-/* Postgress database */
-//const pgp = require('pg-promise')()
-
-// async function connection() {
-//    const db = pgp({
-//       user: "janna",
-//       host: "localhost",
-//       database: "postgres",
-//       password: "password",
-//       port: 5432
-//    });
-//    return await db.connect()
-// }
-
-// const client = connection();
-// setTimeout(() => {  console.log('World!'); }, 2000);
-// console.log('client: ', client);
-
 const PORT = process.env.PORT || 3001
 
 const app = express()
 app.use(bodyParser.json())
-// app.use(bodyParser.urlencoded({extended: true}))
-// app.use(function (req, res, next) {
-//    res.setHeader("Access-Control-Allow-Origin", "*")
-//    res.setHeader("Access-Control-Expose-Headers", "x-auth")
-//    res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
-//    res.setHeader(
-//      "Access-Control-Allow-Headers",
-//      "Origin, X-Requested-With,content-type, Accept , x-auth"
-//    )
-
-//    next()
-//  })
 
 /* login/register URI */
 const user_config = require('./routes/users_login_route')
@@ -80,10 +51,6 @@ server.listen(PORT, () =>
 {
    console.log(`Users service running on port ${PORT}`)
 })
-// app.listen(PORT, () => 
-// {
-//    console.log(`Users service running on port ${PORT}. Database listening at ${process.env.DBPORT}`)
-// })
 
 // Gracefully shut down on SIGINT (Ctrl-C)
 process.on('SIGINT', function () 
