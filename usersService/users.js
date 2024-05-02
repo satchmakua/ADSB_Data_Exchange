@@ -1,5 +1,6 @@
 
 /* Import required libraries and modules */
+// TODO: add code to connect to database and ensure connection is valid
 const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')

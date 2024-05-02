@@ -338,6 +338,28 @@ putUserDevices = async (req, res) =>
    }
 }
 
+// the three below methods are now handled by the broker, leaving here for sanity check.
+// get 'users/:id/client/connect'
+// give client information for websocket connection
+// getConnect = (req, res) =>
+// {
+//    res.status(200).json({})
+// }
+
+// put 'users/:id/client/disconnect'
+// tell broker that client is disconnected
+// putDisconnect = (req, res) =>
+// {
+//    res.status(200).json({})
+// }
+
+// get '/users/:id/devices/:id/adsb?start=<param>&end=<param>''
+// get adsb messages from a to b
+// getAdsbUserDevices = (req, res) =>
+// {
+//    res.status(200).json({})
+// }
+
 module.exports = {
    postUsers,
    isValidUser,
@@ -349,5 +371,8 @@ module.exports = {
    getDevices,
    getUserDevices,
    deleteUserDevices,
-   putUserDevices
+   putUserDevices,
+   // getConnect,
+   // putDisconnect,
+   // getAdsbUserDevices,
 }
