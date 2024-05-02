@@ -1,16 +1,7 @@
-//const Pool = require('pg').Pool
 const crypto = require('crypto')
 
-// const pool = new Pool({
-//    user: "janna",
-//    host: "localhost",
-//    database: "postgres",
-//    password: "password",
-//    port: 5432
-// })
 const { get_auth_code } = require('../oauth/verify_tokens_methods.js')
 const client = require('../database/db.js')
-//const { use } = require('../oauth/verify_route.js')
 
 
 // post '/users'
@@ -33,7 +24,7 @@ postUsers = async (req, res) =>
          text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
          values: [username, hash, salt]
       };
-// add code that checks if user already exists!
+      // add code that checks if user already exists!
       const results = await client.query(query)
       //const token = await get_auth_code({ username }) // dont need token here only create when login?
 
@@ -42,30 +33,6 @@ postUsers = async (req, res) =>
    {
       res.status(500).send(`Error: User registration failed. ${e}`)
    }
-   // const { username, password } = req.body
-
-   // const salt = crypto.randomBytes(32).toString('hex')
-   // if (password == null || password.length < 1 || username == null || username.length < 1)
-   // {
-   //    res.status(400).send('username or password not provided.')
-   //    return
-   // }
-   // const hash = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha256').toString("hex")
-
-   // const query = {
-   //    text: "INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING *",
-   //    values: [username, hash, salt]
-   // };
-
-   // client.query(query, (error, results) =>
-   // {
-   //    if (error)
-   //    {
-   //       res.status(500).send('User registration failed.')
-   //       return
-   //    }
-   //    res.status(201).send(`User added with ID: ${results.rows[0].id}`)
-   // })
 }
 
 // post '/users/validate'
@@ -371,31 +338,6 @@ putUserDevices = async (req, res) =>
    }
 }
 
-// get 'users/:id/client/connect'
-// give client information for websocket connection
-getConnect = (req, res) =>
-{
-   res.status(200).json({})
-}
-
-// put 'users/:id/client/disconnect'
-// tell broker that client is disconnected
-putDisconnect = (req, res) =>
-{
-   res.status(200).json({})
-}
-
-// get '/users/:id/devices/:id/adsb?start=<param>&end=<param>''
-// get adsb messages from a to b
-getAdsbUserDevices = (req, res) =>
-{
-   // verify that device is assigned to user
-   // any o-auth related stuff here?
-   // prompt broker to set-up message queue from time a to b for this device
-   // redirect to give client information for websocket connection
-   res.status(200).json({})
-}
-
 module.exports = {
    postUsers,
    isValidUser,
@@ -407,8 +349,5 @@ module.exports = {
    getDevices,
    getUserDevices,
    deleteUserDevices,
-   putUserDevices,
-   getConnect,
-   putDisconnect,
-   getAdsbUserDevices,
+   putUserDevices
 }

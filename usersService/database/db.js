@@ -5,9 +5,9 @@ require('dotenv').config
       override: true,
       path: path.join(__dirname, '../../dev.env')
    })
-
+// used to have separate DB set up for users, used ADSDB database for all services on our ec2 instance.
 const client = pgp({
-   user: process.env.ADSDB_USER,
+   user: process.env.ADSDB_USER, 
    host: process.env.ADSDB_HOST,
    database: process.env.ADSDB_DB,
    password: process.env.ADSDB_PASSWORD,
