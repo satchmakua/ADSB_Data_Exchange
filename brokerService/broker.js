@@ -1,5 +1,11 @@
 // Broker Component - ADS-B Restful Data Exchange
 
+/* This module serves as the central broker for the ADS-B Restful Data Exchange,
+managing real-time data streaming between ground stations and users.It handles
+WebSocket connections, authenticates requests, orchestrates message forwarding,
+and integrates with the ADS-B simulator. It also provides administrative features
+like logging, error handling, and dynamic API routing based on OAuth-secured endpoints. */
+
 // Import required libraries and modules
 const { exec, ChildProcess, execFile, spawn } = require('node:child_process')
 const express = require('express')
@@ -12,7 +18,7 @@ const { Readable, Writable } = require('stream') // Needed for message queues
 const WebSocket = require('ws') // WebSocket setup for ADS-B
 var kill = require('tree-kill')
 
-// need to put locks on these!!
+// TODO: Implement thread-safe mechanisms for socket maps
 const groundStationSockets = new Map()
 const userSockets = new Map()
 const activeUserRequests = new Map()
@@ -24,14 +30,14 @@ require('dotenv').config({
     path: path.join(__dirname, '../dev.env')
 })
 
-// Function to help troubleshoot db connection issues
+// Enhanced logging for database connection troubleshooting
 function logDbConnectionDetails(db)
 {
     db.connect()
         .then(obj =>
         {
             console.log('Connected to the database:', db.$config.options)
-            obj.done() // release the connection
+            obj.done() // Release the connection
         })
         .catch(error =>
         {
@@ -39,11 +45,11 @@ function logDbConnectionDetails(db)
         })
 }
 
-// Define user service and oauth service urls for proxy service
+// Define User and OAuth service URLs for proxy configuration
 let user = 'http://localhost:3001'
 let auth = 'http://localhost:3002'
 
-// Define the server's port number and database connection URI
+// Specify the server's port number and database connection URI
 const PORT = process.env.PORT || 3000
 const DB_URI = process.env.DB_URI || `postgresql://${process.env.ADSDB_USER}:${process.env.ADSDB_PASSWORD}\
 @${process.env.ADSDB_HOST}:${process.env.ADSDB_PORT}/${process.env.ADSDB_DB}`
@@ -51,7 +57,7 @@ const DB_URI = process.env.DB_URI || `postgresql://${process.env.ADSDB_USER}:${p
 const db = pgp(DB_URI)
 logDbConnectionDetails(db)
 
-// Create an Express application
+// Initialize Express application
 const app = express()
 const server = http.createServer(app)
 const stationSocketServ = new WebSocket.Server({ server })
@@ -60,15 +66,15 @@ const usersSocketServ = new WebSocket.Server({ port: 3003 })
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors())
 
-// Enable Cross-Origin Resource Sharing (CORS) and parse JSON data from request bodies
+// Parse JSON data from request bodies
 app.use(cors())
 app.use(bodyParser.json())
 
-
+// Initialize a Readable stream for the admin queue
 const adminQueue = new Readable(
     {
         objectMode: true,
-        read() { } // The broker shouldn't ever have to read from queue
+        read() { } // Broker shouldn't ever have to read from queue
     }
 )
 
@@ -81,7 +87,8 @@ const adminQueueOut = new Writable(
 
 adminQueue.pipe(adminQueueOut)
 
-// Handle groundstation websocket connections
+/* Establish and manage ground station WebSocket connections
+handling initialization, message reception, and closure events. */
 stationSocketServ.on('connection', function connection(ws)
 {
     let stationID = 0
@@ -89,7 +96,7 @@ stationSocketServ.on('connection', function connection(ws)
     ws.on('close', () =>
     {
         console.log("Groundstation socket closed signal")
-        groundStationSockets.delete(ws) // what is this deleting?
+        groundStationSockets.delete(ws)
     })
 
     ws.on('message', function incoming(message) 
@@ -114,10 +121,9 @@ stationSocketServ.on('connection', function connection(ws)
             const activeRequests = activeUserRequests.get(data.groundStationID)
             if (activeRequests)
             {
-
                 userSockets.forEach((ws, userId) =>
                 {
-                    // Do something with each WebSocket and its associated key (userId)
+                    // Process WebSocket communications for each user based on their ID
                     //console.log(`WebSocket for user ${userId}:`, ws);
                     if (activeRequests.includes(userId))
                     {
@@ -143,11 +149,13 @@ stationSocketServ.on('connection', function connection(ws)
     })
 })
 
+/* Handle user WebSocket connections, initiating ADS-B simulation,
+and managing incoming messages and disconnections. */
 usersSocketServ.on('connection', function connection(userws)
 {
     let startSim = 'node ../ads-b-simulator/app.js 1 10 false'
 
-    console.log('connection!!!!!')
+    console.log('User WebSocket connection established.')
 
     let sim = spawn(startSim, { cwd: '../ads-b-simulator', shell: true, killSignal: 'SIGINT' })
 
@@ -174,15 +182,17 @@ usersSocketServ.on('connection', function connection(userws)
     userws.on('close', () =>
     {
         console.log("User socket closed signal")
-        userSockets.delete(userId) // or should this be userSockets.delete(usersws) ??
+        userSockets.delete(userId)
         kill(sim.pid, 'SIGTERM')
     })
 
 })
 
-// Authentication should happen in users controller when the client is making a socket connection request
-// that call will then make an internal call back to the broker to hand back a socket connection.
-// // Middleware to authenticate WebSocket connections
+/* Middleware to authenticate WebSocket connections:
+Authentication occurs in the users controller during
+client socket connection requests, which then internally
+communicate with the broker to establish a socket connection. */
+
 // stationSocketServ.on('connection', (ws, req) => {
 //     // Placeholder for authentication check, e.g., via token in query params
 //     const token = req.url.split('token=')[1] // Simplified example
@@ -192,8 +202,10 @@ usersSocketServ.on('connection', function connection(userws)
 //     }
 // })
 
+/* Endpoint to initiate streaming from a device to a user,
+ensuring both ground station and user WebSocket connections
+are established and authenticated using OAuth tokens.*/
 const { verify_tokens } = require('../usersService/oauth/verify_tokens_middleware')
-// is app.use().post() valid??
 app.post("/users/:id/devices/:deviceid/stream", verify_tokens, (req, res) => 
 {
     const userId = parseInt(req.params.id)
@@ -203,18 +215,18 @@ app.post("/users/:id/devices/:deviceid/stream", verify_tokens, (req, res) =>
 
     if (!groundStationSockets.has(deviceId))
     {
-        res.status(500).send(`Broker does not have an active connection with groundStation with ID ${deviceId}`)
-        console.log('groundStation Socket Not Found')
+        res.status(500).send(`Broker does not have an active connection with groundStation with ID ${deviceId}.`)
+        console.log('Ground Station Socket Not Found.')
         return
     }
     if (!userSockets.has(userId))
     {
-        res.status(400).send('Websocket has not been created yet. Please make websocket request')
-        console.log('client websocket not found')
+        res.status(400).send('Websocket has not been created yet. Please create websocket request.')
+        console.log('Client Websocket not found')
         return
     }
     //console.log('activeUserRequests ', activeUserRequests.keys())
-    // add userId to deviceId stream to Queue
+    // Add userId to deviceId stream to Queue
     if (!activeUserRequests.get(deviceId))
     {
         //console.log('no active requests')
@@ -228,8 +240,8 @@ app.post("/users/:id/devices/:deviceid/stream", verify_tokens, (req, res) =>
     }
 })
 
-// Forward API call to the appropriate service
-// It is each services responsibility to ensure that oAuth middleware is applied if required for any URI's.
+// Forward API calls to the appropriate service.
+// Each service is responsible for applying OAuth middleware to its URIs as needed.
 app.all("/users/*", proxy(user))
 app.all("/auth/*", proxy(auth))
 
@@ -247,9 +259,9 @@ app.get('/message', async (req, res) =>
 
 })
 
-// Actual implementation for subscription management
-const subscriptions = {} // Simplified example to keep track of subscriptions
-
+// Implementation for subscription management
+const subscriptions = {} // Simplified example; subscriptions tracking
+// TODO: Build out subscription management logic as needed.
 app.post('/subscribe', (req, res) =>
 {
     const { subscriberId, topic } = req.body
@@ -307,7 +319,7 @@ db.connect()
     .then(obj =>
     {
         console.log('Connected to the database')
-        obj.done() // success, release the connection
+        obj.done() // Success - release the connection
     })
     .catch(error =>
     {
@@ -346,9 +358,9 @@ const shutdown = () =>
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 
-
-// OLD WEBSOCKET CODE
-// Tested without and determined that this code is not accessed or needed to run websockets
+// DEPRECATED WEBSOCKET CODE
+// Tested without and determined that this code is not accessed
+// or needed to run Websocket connections
 
 // app.get('/groundstation/websocket', (req, res) =>
 // {
@@ -362,7 +374,6 @@ process.on('SIGINT', shutdown)
 //     console.log('here')
 // })
 
-// TO DO: How and when is this used??
 // Handle WebSocket upgrade requests
 // app.on('upgrade', (request, socket, head) =>
 // {
@@ -371,7 +382,7 @@ process.on('SIGINT', shutdown)
 //         console.log('Not a websocket upgrade request')
 //         return
 //     }
-//     console.log("Socket upgraded!!!!!!")
+//     console.log("Socket upgraded!")
 //     stationSocketServ.handleUpgrade(request, socket, head, (ws) =>
 //     {
 //         groundStationSockets.set(request.groundStationID, socket)

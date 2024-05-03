@@ -1,3 +1,7 @@
+/* This module primarily functions as an interactive database client for the ADS-B system.
+It allows the user to query and retrieve messages from a PostgreSQL database either by
+pulling the latest messages or by specifying a time range. */
+
 const pgp = require('pg-promise')()
 const readline = require('readline')
 const path = require('path')
@@ -79,7 +83,7 @@ db.one('SELECT NOW()')
         console.error('Database connection test error:', error)
     })
 
-// Correcting graceful shutdown and database disconnection
+// Graceful shutdown and database disconnection
 process.on('exit', () => {
     console.log('Database connection closed.')
 })
