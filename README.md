@@ -1,5 +1,5 @@
 
-Sagetech Capstone Project
+# Sagetech Capstone Project
 
 Dependencies:
 - Postgres
@@ -12,18 +12,18 @@ Alexander Flores
 Satchel Hamilton
 -- sponsored by Sagetech Avionics
 
-Overview
+# Overview
 
 The ADSB Exchange System is designed to store and broker ADSB messages in the form of JSON objects, providing a robust solution for real-time aviation data processing. This document outlines how to set up and test the system, including backend hosting on AWS EC2, running a simulator for ADSB messages, and testing the system with a dummy client.
 
-Components
+# Components
 
 - Broker: Facilitates message exchange and manages WebSocket connections.
 - Dummy Client: Simulates user interactions with the system, testing its functionalities.
 - User and Auth Services: Handle user registration, authentication, and device management.
 - Database Setup: Stores ADSB messages, user, and device information.
 
-Setup
+# Setup
 
 1. AWS EC2 Setup: Deploy the backend components on an AWS EC2 instance. Ensure Node.js is installed and configure security groups to allow necessary inbound connections.
 
@@ -45,7 +45,7 @@ Testing the System
 
 3. User and Authentication Testing: Utilize the dummy client to test user registration, login, and device registration through the respective URIs detailed in the provided URI document.
 
-Additional Functionalities
+# Additional Functionalities
 
 - URI Calls: The system supports various operations through specific URIs for user and device management, authentication, and ADSB message streaming. Refer to the "NewURIs-ExternalInternal.docx" for a comprehensive list of available endpoints and their purposes.
 
