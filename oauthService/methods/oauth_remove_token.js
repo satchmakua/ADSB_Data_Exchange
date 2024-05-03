@@ -1,3 +1,13 @@
+/*
+   This file provides function to delete tokens from the database. In the 
+   current implementation, the database is not being used so these functions 
+   have no utility other then to show how the tokens will be deleted if they 
+   where bearer tokens. In my implementation, deleting the token would be 
+   'deleted' from the clients header.
+
+   NOTE: The only way to delete a token (in my implementation) is to wait 
+         for the expiration date.
+*/
 const jwt = require("jsonwebtoken")
 
 
@@ -5,7 +15,6 @@ const jwt = require("jsonwebtoken")
 
 async function removeToken(user, client)
 {
-   /* set up a notification if failed */
    try
    {
       const query = {

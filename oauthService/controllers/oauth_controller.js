@@ -1,4 +1,8 @@
 
+/*
+   This file provide the oauth URI endpoints that help generate tokens and 
+   verify each token.
+*/
 const R = require('ramda')
 
 /* methods for creating/removing tokens */
@@ -24,6 +28,9 @@ const client = require('../database/db.js')
 
 postAuthCode = async (req, res) =>
 {
+   /*
+      This function generates the authentication code
+   */
    try 
    {
       const token = await genOAuthCode(req.body, client)
@@ -46,6 +53,9 @@ postAuthCode = async (req, res) =>
 
 postLogin = async (req, res) =>
 {
+   /*
+      This function generates the access and refresh tokens.
+   */
    try 
    {
       const token =
@@ -79,6 +89,10 @@ postLogin = async (req, res) =>
 /* Function for refreshing OAuth tokens */
 postRefresh = async (req, res) =>
 {
+   /*
+      This function refreshes the access and refresh token by making a new 
+      access and refresh token.
+   */
    try 
    {
       const token =
@@ -109,6 +123,10 @@ postRefresh = async (req, res) =>
 
 postVerifyToken = async (req, res) =>
 {
+   /*
+      This function verifies 1 of the 3 tokens (i.e. auth code, access token,
+      or refresh token)
+   */
    try
    {
       const body = req.body

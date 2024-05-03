@@ -1,3 +1,10 @@
+/*
+   This file contains the setup for the database. Each file that requires
+   access to the oauth database will import this file.
+
+   Note: the database is currently NOT being used in my oauth implementation.
+   Look at oauth_db.js for possible tables that you might want in the future.
+*/
 const pgp = require('pg-promise')({})
 const path = require('path')
 require('dotenv').config

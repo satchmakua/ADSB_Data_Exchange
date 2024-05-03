@@ -1,12 +1,14 @@
 
 const express = require('express')
 const bodyParser = require('body-parser')
+// the following might be needed in the future to create environment variables
 // const path = require('path')
 // require('dotenv').config(
 //    {
 //       override: true,
 //       path: path.join(__dirname, '../dev.env')
-//    })
+//    }) 
+
 
 
 

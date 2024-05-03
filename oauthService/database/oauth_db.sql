@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS auth;
 DROP TABLE IF EXISTS oauth;
 
+-- !!! potential use of database !!!
 -- make storage for logs
 -- ex. userId, encryptedToken, timeCreated, status, reasonForRequest, scope, lifespan, (transponderId or region)
 
@@ -8,8 +9,8 @@ DROP TABLE IF EXISTS oauth;
 CREATE TABLE auth
 (
 	userId serial PRIMARY KEY, -- maybe other identifier
-	accessToken text, -- delete
-	refreshToken text, -- encrypted
+	accessToken text,
+	refreshToken text,
    createdAT timestamp NOT NULL default current_timestamp
 ) WITH (OIDS = FALSE);
 
@@ -20,7 +21,8 @@ CREATE TABLE oauth
 	authCode text
 ) WITH (OIDS = FALSE);
 
--- access postgres
+
+-- access postgres in linux
 -- sudo -u sage psql -d AUTH_TOKENS
 
 

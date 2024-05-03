@@ -1,3 +1,4 @@
+/* TESTS DO NOT WORK because they are testing an old version of oauth */
 const client = require('./database/db.js')
 const { beforeEach, afterEach } = require('node:test')
 
