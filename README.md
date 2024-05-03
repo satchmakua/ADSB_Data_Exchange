@@ -10,7 +10,7 @@ Joshua Mathwich
 Janna Tanninen
 Alexander Flores
 Satchel Hamilton
--- sponsored by Sagetech Avionics
+- sponsored by Sagetech Avionics
 
 # Overview
 
@@ -55,22 +55,27 @@ Install postgresql:  sudo apt-get install postgresql
 
 Launch psql: psql
 
-Create database: CREATE DATABASE database;
-                 CREATE TABLE users
-                 (
-                    id serial PRIMARY KEY,
-                    username text UNIQUE,
-                    password text,
-                    salt text
-                 ) WITH (OIDS = FALSE);
-                 CREATE TABLE groundstations
-                 (
-                    id serial PRIMARY KEY,
-                    user_id int,
-                    mac_address text UNIQUE,
-                    latitude int,
-                    longitude int,
-                    FOREIGN KEY(user_id) REFERENCES users(id)
-                 ) WITH (OIDS = FALSE);
+Create database: 
+```
+CREATE DATABASE database;
+```
+```
+CREATE TABLE users
+(
+   id serial PRIMARY KEY,
+   username text UNIQUE,
+   password text,
+   salt text
+) WITH (OIDS = FALSE);
+CREATE TABLE groundstations
+(
+   id serial PRIMARY KEY,
+   user_id int,
+   mac_address text UNIQUE,
+   latitude int,
+   longitude int,
+   FOREIGN KEY(user_id) REFERENCES users(id)
+) WITH (OIDS = FALSE);
+```
 
 If issues with user permissions: sudo -u postgres psqlCREATE ROLE 'username' WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD 'password';
