@@ -1,3 +1,9 @@
+/* This module serves as a WebSocket client that interacts with a WebSocket server,
+primarily used for real-time communication in the ADS-B system. It manages WebSocket
+connections for specific user and device IDs. The focus is on maintaining a persistent
+connection with a server, sending initialization data, and then continuously receiving
+and logging data from the server. */
+
 const WebSocket = require('ws')
 const axios = require('axios')
 
@@ -22,10 +28,11 @@ async function getAccessCode() {
    }
 }
 
-// user calls tokens/login when logging in, when they receive a response that refresh is needed then
-// user needs to call tokens/refresh
+// Initiate user authentication by calling tokens/login.
+// If a token refresh is necessary, the user must subsequently call tokens/refresh.
 async function getAuthorizationToken(authCode) {
    try {
+       // Post to tokens/login in admin scope & auth code to obtain access/refresh tokens.
        const response = (await axios.post('http://127.0.0.1:3000/users/tokens/login', 
        {
          "scope": "admin"
@@ -46,8 +53,10 @@ async function getAuthorizationToken(authCode) {
    }
 }
 
- const socket = new WebSocket(`ws://localhost:3003/${userId}`)
- socket.on('open', () => {
+// Establish a WebSocket connection and handle connection events.
+const socket = new WebSocket(`ws://localhost:3003/${userId}`)
+socket.on('open', () => {
+   // Send initialization data to the server upon connection.
    socket.send(JSON.stringify(
       {
          type: 'init',
@@ -70,7 +79,7 @@ socket.on('error', (error) => {
 
 async function main() {
    try {
-      // below functions are to successfully login and get oAuth token.
+      // Obtain the initial authorization code.
       const auth_code = await getAccessCode()
       console.log("code:",auth_code)
       const {access_token, refresh_token} = await getAuthorizationToken(auth_code)
