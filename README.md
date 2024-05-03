@@ -4,12 +4,18 @@
 Dependencies:
 - Postgres
 - Node.js crypto library
+- Express
+- jsonwebtoken
 
 Authors:
-Joshua Mathwich
-Janna Tanninen
-Alexander Flores
-Satchel Hamilton
+
+   Joshua Mathwich
+
+   Janna Tanninen
+
+   Alexander Flores
+
+   Satchel Hamilton
 - sponsored by Sagetech Avionics
 
 # Overview
@@ -67,6 +73,8 @@ CREATE TABLE users
    password text,
    salt text
 ) WITH (OIDS = FALSE);
+```
+```
 CREATE TABLE groundstations
 (
    id serial PRIMARY KEY,
