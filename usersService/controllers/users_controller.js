@@ -76,6 +76,7 @@ isValidUser = async (req, res) =>
          return
       }
 
+      /* get auth code */
       const token = await get_auth_code({ username: username })
 
       res.status(201).header('auth_code', token).send('User Verified.')

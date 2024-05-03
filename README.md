@@ -8,11 +8,11 @@ Dependencies:
 - jsonwebtoken
 
 Authors:
-- Joshua Mathwich
-- Janna Tanninen
-- Alexander Flores
-- Satchel Hamilton
-## sponsored by Sagetech Avionics
+Joshua Mathwich,
+Janna Tanninen,
+Alexander Flores,
+Satchel Hamilton
+### sponsored by Sagetech Avionics
 
 # Overview
 
